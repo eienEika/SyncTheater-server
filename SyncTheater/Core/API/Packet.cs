@@ -46,7 +46,7 @@ namespace SyncTheater.Core.API
 
             var api = BitConverter.GetBytes(apiCode);
             var data = Encoding.UTF8.GetBytes(body);
-            var size = BitConverter.GetBytes(data.Length);
+            var size = BitConverter.GetBytes((short) data.Length);
 
             if (BitConverter.IsLittleEndian)
             {
