@@ -4,38 +4,41 @@ using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API.Apis
 {
-    internal sealed class Chat
+    internal sealed class Chat : IApiComponent
     {
-        public static string Request(string body)
+        public string Request(string body)
         {
             Log.Verbose($"Got request to chat with body {body}.");
 
-            var data = SerializationUtils.Deserialize<Model>(body);
+            var data = SerializationUtils.Deserialize<IApiComponent.IncomeData<Method, Model>>(body);
             return data.Method switch
             {
-                Method.NewMessage => NewMessage(data),
+                Method.NewMessage => NewMessage(data.Data),
                 _ => Api.UnknownMethodResponse(data.Method),
             };
         }
 
-        private static string NewMessage(Model data)
+        private string NewMessage(Model data)
         {
             Log.Debug($"Chat API: NewMessage request, text: \"{data.Text}\"");
 
             if (string.IsNullOrWhiteSpace(data.Text))
             {
-                return new OutcomeData
+                return new IApiComponent.OutcomeData<Method, Error>
                 {
                     Error = Error.EmptyText,
-                    Method = data.Method,
+                    Method = Method.NewMessage,
                 }.ToJson();
             }
 
-            return new OutcomeData
+            return new IApiComponent.OutcomeData<Method, Api.ErrorCommon>
             {
-                Error = (Error) Api.ErrorCommon.NoError,
+                Error = Api.ErrorCommon.NoError,
                 Method = Method.NewMessage,
-                Text = data.Text,
+                Data = new
+                {
+                    data.Text,
+                },
             }.ToJson();
         }
 
@@ -49,14 +52,12 @@ namespace SyncTheater.Core.API.Apis
             EmptyText = 100,
         }
 
-        [Serializable]
-        private sealed class Model : IncomeDataBase<Method>
+        private sealed class State
         {
-            public string Text { get; set; }
         }
 
         [Serializable]
-        private sealed class OutcomeData : OutcomeDataBase<Method, Error>
+        private sealed class Model
         {
             public string Text { get; set; }
         }

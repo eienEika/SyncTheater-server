@@ -4,21 +4,20 @@ using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API.Apis
 {
-    internal sealed class Player
+    internal sealed class Player : IApiComponent
     {
-        public bool Pause { get; private set; }
-        public string Url { get; private set; }
+        private readonly State _state = new State();
 
         public string Request(string body)
         {
             Log.Verbose($"Got request to player with body {body}.");
 
-            var data = SerializationUtils.Deserialize<Model>(body);
-            return data.Method switch
+            var request = SerializationUtils.Deserialize<IApiComponent.IncomeData<Method, Model>>(body);
+            return request.Method switch
             {
-                Method.SetVideo => SetVideo(data),
-                Method.PauseCycle => PauseCycle(data),
-                _ => Api.UnknownMethodResponse(data.Method),
+                Method.SetVideo => SetVideo(request.Data),
+                Method.PauseCycle => PauseCycle(),
+                _ => Api.UnknownMethodResponse(request.Method),
             };
         }
 
@@ -26,26 +25,35 @@ namespace SyncTheater.Core.API.Apis
         {
             Log.Debug($"Player API: SetVideo request, new url: {data.Url}.");
 
-            Url = data.Url;
-            Pause = false;
-            return new OutcomeData
+            _state.Url = data.Url;
+            _state.Pause = false;
+
+            return new IApiComponent.OutcomeData<Method, Api.ErrorCommon>
             {
-                Error = (Error) Api.ErrorCommon.NoError,
-                Method = data.Method,
-                Url = data.Url,
+                Error = Api.ErrorCommon.NoError,
+                Method = Method.SetVideo,
+                Data = new
+                {
+                   _state.Url,
+                    Pause = false,
+                },
             }.ToJson();
         }
 
-        private string PauseCycle(Model data)
+        private string PauseCycle()
         {
-            Log.Debug($"Player API: PauseCycle request, paused before: {Pause}.");
+            Log.Debug($"Player API: PauseCycle request, paused before: {_state.Pause}.");
 
-            Pause = !Pause;
-            return new OutcomeData
+            _state.Pause = !_state.Pause;
+
+            return new IApiComponent.OutcomeData<Method, Api.ErrorCommon>
             {
-                Error = (Error) Api.ErrorCommon.NoError,
-                Method = data.Method,
-                Pause = Pause,
+                Error = Api.ErrorCommon.NoError,
+                Method = Method.PauseCycle,
+                Data = new
+                {
+                    _state.Pause,
+                },
             }.ToJson();
         }
 
@@ -59,16 +67,15 @@ namespace SyncTheater.Core.API.Apis
         {
         }
 
-        [Serializable]
-        private sealed class Model : IncomeDataBase<Method>
+        private sealed class State
         {
+            public bool Pause { get; set; }
             public string Url { get; set; }
         }
 
         [Serializable]
-        private sealed class OutcomeData : OutcomeDataBase<Method, Error>
+        private sealed class Model
         {
-            public bool? Pause { get; set; }
             public string Url { get; set; }
         }
     }

@@ -1,5 +1,4 @@
 using System;
-using SyncTheater.Core.API.Apis;
 using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API
@@ -33,11 +32,13 @@ namespace SyncTheater.Core.API
 
         private static void Execute(ApiCode apiCode, string body)
         {
+            var room = Room.GetInstance;
+
             Send(apiCode,
                 apiCode switch
                 {
-                    ApiCode.Chat => Chat.Request(body),
-                    ApiCode.Player => Room.GetInstance.Player.Request(body),
+                    ApiCode.Chat => room.Chat.Request(body),
+                    ApiCode.Player => room.Player.Request(body),
                     _ => UnknownApiResponse,
                 }
             );

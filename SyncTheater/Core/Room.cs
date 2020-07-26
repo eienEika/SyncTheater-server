@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using Serilog;
+using SyncTheater.Core.API;
 using SyncTheater.Core.API.Apis;
 using SyncTheater.Core.Servers;
 using SyncTheater.KinotheaterService;
@@ -19,9 +20,9 @@ namespace SyncTheater.Core
         {
         }
 
-        public Player Player { get; } = new Player();
+        public IApiComponent Player { get; } = new Player();
 
-        public Chat Chat { get; } = new Chat();
+        public IApiComponent Chat { get; } = new Chat();
 
         public static Room GetInstance { get; } = new Room();
 
