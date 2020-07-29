@@ -1,4 +1,5 @@
 using System;
+using SyncTheater.Core.API.Apis;
 using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API
@@ -12,17 +13,26 @@ namespace SyncTheater.Core.API
             UnknownApi,
         }
 
-        private static readonly string UnknownApiResponse = new
+        public enum SendTo
+        {
+            All,
+            Sender,
+        }
+
+        private static readonly IApiComponent Chat = new Chat();
+        private static readonly IApiComponent Player = new Player();
+
+        private static readonly object UnknownApiResponse = new
         {
             Error = ErrorCommon.UnknownApi,
-        }.ToJson();
+        };
 
-        public static string UnknownMethodResponse<T>(T method) where T : Enum =>
+        public static object UnknownMethodResponse<T>(T method) where T : Enum =>
             new
             {
                 Error = ErrorCommon.UnknownMethod,
                 Method = method,
-            }.ToJson();
+            };
 
         public static void ReadAndExecute(byte[] data)
         {
@@ -32,21 +42,14 @@ namespace SyncTheater.Core.API
 
         private static void Execute(ApiCode apiCode, string body)
         {
-            var room = Room.GetInstance;
+            var (data, sendTo) = apiCode switch
+            {
+                ApiCode.Chat => Chat.Request(body),
+                ApiCode.Player => Player.Request(body),
+                _ => new Tuple<object, SendTo>(UnknownApiResponse, SendTo.Sender),
+            };
 
-            Send(apiCode,
-                apiCode switch
-                {
-                    ApiCode.Chat => room.Chat.Request(body),
-                    ApiCode.Player => room.Player.Request(body),
-                    _ => UnknownApiResponse,
-                }
-            );
-        }
-
-        private static void Send(ApiCode apiCode, string body)
-        {
-            Room.GetInstance.SendTo(Packet.Write((short) apiCode, body));
+            Room.GetInstance.Send(Packet.Write((short) apiCode, data.ToJson()), sendTo);
         }
 
         private enum ApiCode : short

@@ -4,7 +4,7 @@ namespace SyncTheater.Core.API
 {
     internal interface IApiComponent
     {
-        public string Request(string body);
+        public Tuple<object, Api.SendTo> Request(string body);
 
         [Serializable]
         protected class IncomeData<TMethod, TData> where TMethod : Enum where TData : class

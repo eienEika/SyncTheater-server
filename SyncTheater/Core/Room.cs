@@ -2,7 +2,6 @@ using System;
 using System.Net;
 using Serilog;
 using SyncTheater.Core.API;
-using SyncTheater.Core.API.Apis;
 using SyncTheater.Core.Servers;
 using SyncTheater.KinotheaterService;
 using SyncTheater.Types.Exceptions;
@@ -19,10 +18,6 @@ namespace SyncTheater.Core
         private Room()
         {
         }
-
-        public IApiComponent Player { get; } = new Player();
-
-        public IApiComponent Chat { get; } = new Chat();
 
         public static Room GetInstance { get; } = new Room();
 
@@ -96,9 +91,14 @@ namespace SyncTheater.Core
             Log.Information("Server stopped.");
         }
 
-        public void SendTo(byte[] data)
+        public void Send(byte[] data, Api.SendTo sendTo)
         {
-            _server.Multicast(data);
+            if (sendTo == Api.SendTo.All)
+            {
+                _server.Multicast(data);
+            }
+
+            // TODO
         }
 
         private void MainLoop()

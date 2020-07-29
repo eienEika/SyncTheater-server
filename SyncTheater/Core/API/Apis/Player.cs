@@ -8,53 +8,58 @@ namespace SyncTheater.Core.API.Apis
     {
         private readonly State _state = new State();
 
-        public string Request(string body)
+        public Tuple<object, Api.SendTo> Request(string body)
         {
             Log.Verbose($"Got request to player with body {body}.");
 
             var request = SerializationUtils.Deserialize<IApiComponent.IncomeData<Method, Model>>(body);
+
             return request.Method switch
             {
-                Method.SetVideo => SetVideo(request.Data),
                 Method.PauseCycle => PauseCycle(),
-                _ => Api.UnknownMethodResponse(request.Method),
+                Method.SetVideo => SetVideo(request.Data.Url),
+                _ => new Tuple<object, Api.SendTo>(Api.UnknownMethodResponse(request.Method), Api.SendTo.Sender),
             };
         }
 
-        private string SetVideo(Model data)
+        private Tuple<object, Api.SendTo> SetVideo(string url)
         {
-            Log.Debug($"Player API: SetVideo request, new url: {data.Url}.");
+            Log.Debug($"Player API: SetVideo request, new url: {url}.");
 
-            _state.Url = data.Url;
+            _state.Url = url;
             _state.Pause = false;
 
-            return new IApiComponent.OutcomeData<Method, Api.ErrorCommon>
-            {
-                Error = Api.ErrorCommon.NoError,
-                Method = Method.SetVideo,
-                Data = new
+            return new Tuple<object, Api.SendTo>(new IApiComponent.OutcomeData<Method, Api.ErrorCommon>
                 {
-                   _state.Url,
-                    Pause = false,
+                    Data = new
+                    {
+                        _state.Url,
+                        Pause = false,
+                    },
+                    Error = Api.ErrorCommon.NoError,
+                    Method = Method.SetVideo,
                 },
-            }.ToJson();
+                Api.SendTo.All
+            );
         }
 
-        private string PauseCycle()
+        private Tuple<object, Api.SendTo> PauseCycle()
         {
             Log.Debug($"Player API: PauseCycle request, paused before: {_state.Pause}.");
 
             _state.Pause = !_state.Pause;
 
-            return new IApiComponent.OutcomeData<Method, Api.ErrorCommon>
-            {
-                Error = Api.ErrorCommon.NoError,
-                Method = Method.PauseCycle,
-                Data = new
+            return new Tuple<object, Api.SendTo>(new IApiComponent.OutcomeData<Method, Api.ErrorCommon>
                 {
-                    _state.Pause,
+                    Data = new
+                    {
+                        _state.Pause,
+                    },
+                    Error = Api.ErrorCommon.NoError,
+                    Method = Method.PauseCycle,
                 },
-            }.ToJson();
+                Api.SendTo.All
+            );
         }
 
         private enum Method
