@@ -6,19 +6,6 @@ namespace SyncTheater.Core.API
 {
     internal static class Api
     {
-        public enum ErrorCommon
-        {
-            NoError = 0,
-            UnknownMethod,
-            UnknownApi,
-        }
-
-        public enum SendTo
-        {
-            All,
-            Sender,
-        }
-
         private static readonly IApiComponent Chat = new Chat();
         private static readonly IApiComponent Player = new Player();
 
@@ -57,5 +44,18 @@ namespace SyncTheater.Core.API
             Chat = 0,
             Player,
         }
+    }
+
+    internal enum SendTo
+    {
+        All,
+        Sender,
+    }
+
+    internal enum ErrorCommon
+    {
+        NoError = 0,
+        UnknownMethod,
+        UnknownApi,
     }
 }

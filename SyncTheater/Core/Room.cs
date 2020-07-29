@@ -91,9 +91,9 @@ namespace SyncTheater.Core
             Log.Information("Server stopped.");
         }
 
-        public void Send(byte[] data, Api.SendTo sendTo)
+        public void Send(byte[] data, SendTo sendTo)
         {
-            if (sendTo == Api.SendTo.All)
+            if (sendTo == SendTo.All)
             {
                 _server.Multicast(data);
             }
