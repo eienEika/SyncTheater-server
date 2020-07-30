@@ -1,29 +1,30 @@
 using System;
+using System.Collections.Generic;
 using Serilog;
 using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API.Apis
 {
-    internal sealed class Player : IApiComponent
+    internal sealed class Authentication : IApiComponent
     {
         public enum Method
         {
-            SetVideo = 100,
-            PauseCycle,
+            Anonymous = 100,
+            GetUsers,
+            Disconnect,
         }
 
         private readonly State _state = new State();
 
         public Tuple<object, SendTo> RemoteRequest(string body, Guid sender)
         {
-            Log.Verbose($"Got request to player with body {body}.");
+            Log.Verbose($"Got request to authentication with body {body}.");
 
             var request = SerializationUtils.Deserialize<IncomeData<Method, Model>>(body);
 
             var ((error, data), sendTo) = request.Method switch
             {
-                Method.PauseCycle => (PauseCycle(), SendTo.All),
-                Method.SetVideo => (SetVideo(request.Data.Url), SendTo.All),
+                Method.Anonymous => (AuthenticateAnonymous(sender), SendTo.Sender),
                 _ => (new Tuple<ApiError, object>(ApiError.UnknownMethod, null), SendTo.Sender),
             };
 
@@ -41,49 +42,36 @@ namespace SyncTheater.Core.API.Apis
         public Tuple<ApiError, object> LocalRequest(Enum method, params dynamic[] args) =>
             (Method) method switch
             {
+                Method.GetUsers => GetUsers(),
+                Method.Disconnect => Disconnect(args[0]),
                 _ => throw new NotSupportedException(),
             };
 
-        private Tuple<ApiError, object> SetVideo(string url)
+        private Tuple<ApiError, object> AuthenticateAnonymous(Guid sender)
         {
-            Log.Debug($"Player API: SetVideo request, new url: {url}.");
+            _state.AuthenticatedUsers.Add(sender);
 
-            _state.Url = url;
-            _state.Pause = false;
-
-            return new Tuple<ApiError, object>(ApiError.NoError,
-                new
-                {
-                    _state.Url,
-                    _state.Pause,
-                }
-            );
+            return new Tuple<ApiError, object>(ApiError.NoError, null);
         }
 
-        private Tuple<ApiError, object> PauseCycle()
+        private Tuple<ApiError, object> GetUsers() =>
+            new Tuple<ApiError, object>(ApiError.NoError, _state.AuthenticatedUsers);
+
+        private Tuple<ApiError, object> Disconnect(Guid user)
         {
-            Log.Debug($"Player API: PauseCycle request, paused before: {_state.Pause}.");
-
-            _state.Pause = !_state.Pause;
-
-            return new Tuple<ApiError, object>(ApiError.NoError,
-                new
-                {
-                    _state.Pause,
-                }
-            );
+            _state.AuthenticatedUsers.Remove(user);
+            
+            return new Tuple<ApiError, object>(ApiError.NoError, null);
         }
 
         private sealed class State
         {
-            public bool Pause { get; set; }
-            public string Url { get; set; }
+            public List<Guid> AuthenticatedUsers { get; } = new List<Guid>();
         }
 
         [Serializable]
         private sealed class Model
         {
-            public string Url { get; set; }
         }
     }
 }

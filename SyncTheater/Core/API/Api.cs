@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SyncTheater.Core.API.Apis;
 using SyncTheater.Utils;
 
@@ -6,56 +7,60 @@ namespace SyncTheater.Core.API
 {
     internal static class Api
     {
-        private static readonly IApiComponent Chat = new Chat();
-        private static readonly IApiComponent Player = new Player();
-
-        private static readonly object UnknownApiResponse = new
+        private static readonly object UnknownApiResponse = new OutcomeData<Enum>
         {
-            Error = ErrorCommon.UnknownApi,
+            Data = null,
+            Error = ApiError.UnknownApi,
+            Method = null,
         };
 
-        public static object UnknownMethodResponse<T>(T method) where T : Enum =>
-            new
-            {
-                Error = ErrorCommon.UnknownMethod,
-                Method = method,
-            };
+        public static IApiComponent Authentication { get; } = new Authentication();
+        public static IApiComponent Chat { get; } = new Chat();
+        public static IApiComponent Player { get; } = new Player();
 
-        public static void ReadAndExecute(byte[] data)
+        public static void ReadAndExecute(byte[] data, Guid sender)
         {
             var (code, jsonData) = Packet.Read(data);
-            Execute((ApiCode) code, jsonData);
+            Execute((ApiCode) code, jsonData, sender);
         }
 
-        private static void Execute(ApiCode apiCode, string body)
+        private static void Execute(ApiCode apiCode, string body, Guid sender)
         {
             var (data, sendTo) = apiCode switch
             {
-                ApiCode.Chat => Chat.Request(body),
-                ApiCode.Player => Player.Request(body),
+                ApiCode.Authentication => Authentication.RemoteRequest(body, sender),
+                ApiCode.Chat => Chat.RemoteRequest(body, sender),
+                ApiCode.Player => Player.RemoteRequest(body, sender),
                 _ => new Tuple<object, SendTo>(UnknownApiResponse, SendTo.Sender),
             };
 
-            Room.GetInstance.Send(Packet.Write((short) apiCode, data.ToJson()), sendTo);
+            // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+            var sendTos = sendTo switch
+            {
+                SendTo.All => Authentication.LocalRequest(Apis.Authentication.Method.GetUsers).Item2 as
+                    IEnumerable<Guid>,
+                SendTo.Sender => new[]
+                {
+                    sender,
+                },
+                _ => new Guid[0],
+            };
+
+            Room.GetInstance.Send(Packet.Write((short) apiCode, data.ToJson()), sendTos);
         }
 
         private enum ApiCode : short
         {
             Chat = 0,
             Player,
+            Authentication,
         }
     }
 
     internal enum SendTo
     {
+        None,
         All,
         Sender,
-    }
-
-    internal enum ErrorCommon
-    {
-        NoError = 0,
-        UnknownMethod,
-        UnknownApi,
     }
 }

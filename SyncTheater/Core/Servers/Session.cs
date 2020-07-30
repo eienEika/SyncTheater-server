@@ -2,6 +2,7 @@ using System.Net.Sockets;
 using NetCoreServer;
 using Serilog;
 using SyncTheater.Core.API;
+using SyncTheater.Core.API.Apis;
 
 namespace SyncTheater.Core.Servers
 {
@@ -17,6 +18,11 @@ namespace SyncTheater.Core.Servers
             // Console.WriteLine(Server.BytesReceived);
         }
 
+        protected override void OnDisconnected()
+        {
+            Api.Authentication.LocalRequest(Authentication.Method.Disconnect, Id);
+        }
+
         protected override void OnError(SocketError error)
         {
             Log.Fatal($"Core session: {error}.");
@@ -26,7 +32,7 @@ namespace SyncTheater.Core.Servers
         {
             Log.Verbose($"Received data from {Socket.RemoteEndPoint}.");
 
-            Api.ReadAndExecute(buffer);
+            Api.ReadAndExecute(buffer, Id);
         }
 
         protected override void OnSent(long sent, long pending)

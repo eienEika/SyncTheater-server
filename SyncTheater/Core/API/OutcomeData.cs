@@ -3,10 +3,10 @@ using System;
 namespace SyncTheater.Core.API
 {
     [Serializable]
-    internal class OutcomeData<TMethod, TError> where TMethod : Enum where TError : Enum
+    internal class OutcomeData<T> where T : Enum
     {
-        public TMethod Method { get; set; }
-        public TError Error { get; set; }
+        public T Method { get; set; }
+        public ApiError Error { get; set; }
         public object Data { get; set; }
     }
 }
