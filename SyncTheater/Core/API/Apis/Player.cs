@@ -1,30 +1,23 @@
 using System;
 using Serilog;
+using SyncTheater.Core.API.Types;
 using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Player : IApiComponent
     {
-        public enum Method
-        {
-            SetVideo = 100,
-            PauseCycle,
-        }
-
-        private readonly State _state = new State();
-
-        public Tuple<object, SendTo> RemoteRequest(string body, Guid sender)
+        public Tuple<object, SendTo> Request(string body, Guid sender)
         {
             Log.Verbose($"Got request to player with body {body}.");
 
             var request = SerializationUtils.Deserialize<IncomeData<Method, Model>>(body);
 
-            var ((error, data), sendTo) = request.Method switch
+            var (error, data, sendTo) = request.Method switch
             {
-                Method.PauseCycle => (PauseCycle(), SendTo.All),
-                Method.SetVideo => (SetVideo(request.Data.Url), SendTo.All),
-                _ => (new Tuple<ApiError, object>(ApiError.UnknownMethod, null), SendTo.Sender),
+                Method.PauseCycle => PauseCycle(),
+                Method.SetVideo => SetVideo(request.Data.Url),
+                _ => new Tuple<ApiError, object, SendTo>(ApiError.UnknownMethod, null, SendTo.Sender),
             };
 
             return new Tuple<object, SendTo>(new OutcomeData<Method>
@@ -37,47 +30,24 @@ namespace SyncTheater.Core.API.Apis
             );
         }
 
-        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-        public Tuple<ApiError, object> LocalRequest(Enum method, params dynamic[] args) =>
-            (Method) method switch
-            {
-                _ => throw new NotSupportedException(),
-            };
-
-        private Tuple<ApiError, object> SetVideo(string url)
+        private static Tuple<ApiError, object, SendTo> SetVideo(string url)
         {
-            Log.Debug($"Player API: SetVideo request, new url: {url}.");
+            Room.GetState.SetVideoUrl(url);
 
-            _state.Url = url;
-            _state.Pause = false;
-
-            return new Tuple<ApiError, object>(ApiError.NoError,
-                new
-                {
-                    _state.Url,
-                    _state.Pause,
-                }
-            );
+            return new Tuple<ApiError, object, SendTo>(ApiError.NoError, null, SendTo.Sender);
         }
 
-        private Tuple<ApiError, object> PauseCycle()
+        private static Tuple<ApiError, object, SendTo> PauseCycle()
         {
-            Log.Debug($"Player API: PauseCycle request, paused before: {_state.Pause}.");
+            Room.GetState.PauseCycle();
 
-            _state.Pause = !_state.Pause;
-
-            return new Tuple<ApiError, object>(ApiError.NoError,
-                new
-                {
-                    _state.Pause,
-                }
-            );
+            return new Tuple<ApiError, object, SendTo>(ApiError.NoError, null, SendTo.Sender);
         }
 
-        private sealed class State
+        private enum Method
         {
-            public bool Pause { get; set; }
-            public string Url { get; set; }
+            SetVideo,
+            PauseCycle,
         }
 
         [Serializable]

@@ -1,17 +1,13 @@
 using System;
 using Serilog;
+using SyncTheater.Core.API.Types;
 using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Chat : IApiComponent
     {
-        public enum Method
-        {
-            NewMessage = 100,
-        }
-
-        public Tuple<object, SendTo> RemoteRequest(string body, Guid sender)
+        public Tuple<object, SendTo> Request(string body, Guid sender)
         {
             Log.Verbose($"Got request to chat with body {body}.");
 
@@ -33,14 +29,7 @@ namespace SyncTheater.Core.API.Apis
             );
         }
 
-        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-        public Tuple<ApiError, object> LocalRequest(Enum method, params dynamic[] args) =>
-            (Method) method switch
-            {
-                _ => throw new NotSupportedException(),
-            };
-
-        private Tuple<ApiError, object, SendTo> NewMessage(string text)
+        private static Tuple<ApiError, object, SendTo> NewMessage(string text)
         {
             Log.Debug($"Chat API: NewMessage request, text: \"{text}\"");
 
@@ -58,8 +47,9 @@ namespace SyncTheater.Core.API.Apis
             );
         }
 
-        private sealed class State
+        private enum Method
         {
+            NewMessage,
         }
 
         [Serializable]

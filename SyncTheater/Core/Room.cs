@@ -11,6 +11,7 @@ namespace SyncTheater.Core
 {
     internal sealed class Room
     {
+        private readonly RoomState _state = new RoomState();
         private bool _initialized;
         private Server _server;
         private Service _service;
@@ -20,6 +21,7 @@ namespace SyncTheater.Core
         }
 
         public static Room GetInstance { get; } = new Room();
+        public static RoomState GetState => GetInstance._state;
 
         public bool IsOpen => _server?.IsStarted ?? false;
 

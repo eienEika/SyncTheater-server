@@ -2,7 +2,6 @@ using System.Net.Sockets;
 using NetCoreServer;
 using Serilog;
 using SyncTheater.Core.API;
-using SyncTheater.Core.API.Apis;
 
 namespace SyncTheater.Core.Servers
 {
@@ -20,7 +19,7 @@ namespace SyncTheater.Core.Servers
 
         protected override void OnDisconnected()
         {
-            Api.Authentication.LocalRequest(Authentication.Method.Disconnect, Id);
+            Room.GetState.UserDisconnect(Id);
         }
 
         protected override void OnError(SocketError error)

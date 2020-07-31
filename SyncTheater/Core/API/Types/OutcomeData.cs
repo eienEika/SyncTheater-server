@@ -1,6 +1,6 @@
 using System;
 
-namespace SyncTheater.Core.API
+namespace SyncTheater.Core.API.Types
 {
     [Serializable]
     internal class OutcomeData<T> where T : Enum

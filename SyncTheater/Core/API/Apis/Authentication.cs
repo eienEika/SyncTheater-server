@@ -1,31 +1,23 @@
 using System;
-using System.Collections.Generic;
 using Serilog;
+using SyncTheater.Core.API.Types;
 using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Authentication : IApiComponent
     {
-        public enum Method
-        {
-            Anonymous = 100,
-            GetUsers,
-            Disconnect,
-        }
-
-        private readonly State _state = new State();
-
-        public Tuple<object, SendTo> RemoteRequest(string body, Guid sender)
+        public Tuple<object, SendTo> Request(string body, Guid sender)
         {
             Log.Verbose($"Got request to authentication with body {body}.");
 
             var request = SerializationUtils.Deserialize<IncomeData<Method, Model>>(body);
 
-            var ((error, data), sendTo) = request.Method switch
+            var (error, data, sendTo) = request.Method switch
             {
-                Method.Anonymous => (AuthenticateAnonymous(sender), SendTo.Sender),
-                _ => (new Tuple<ApiError, object>(ApiError.UnknownMethod, null), SendTo.Sender),
+                Method.AnonymousAuth => AuthenticateAnonymous(sender),
+                Method.Disconnect => Disconnect(sender),
+                _ => new Tuple<ApiError, object, SendTo>(ApiError.UnknownMethod, null, SendTo.Sender),
             };
 
             return new Tuple<object, SendTo>(new OutcomeData<Method>
@@ -38,35 +30,24 @@ namespace SyncTheater.Core.API.Apis
             );
         }
 
-        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-        public Tuple<ApiError, object> LocalRequest(Enum method, params dynamic[] args) =>
-            (Method) method switch
-            {
-                Method.GetUsers => GetUsers(),
-                Method.Disconnect => Disconnect(args[0]),
-                _ => throw new NotSupportedException(),
-            };
-
-        private Tuple<ApiError, object> AuthenticateAnonymous(Guid sender)
+        private static Tuple<ApiError, object, SendTo> AuthenticateAnonymous(Guid user)
         {
-            _state.AuthenticatedUsers.Add(sender);
+            Room.GetState.NewAnonymousUser(user);
 
-            return new Tuple<ApiError, object>(ApiError.NoError, null);
+            return new Tuple<ApiError, object, SendTo>(ApiError.NoError, null, SendTo.Sender);
         }
 
-        private Tuple<ApiError, object> GetUsers() =>
-            new Tuple<ApiError, object>(ApiError.NoError, _state.AuthenticatedUsers);
-
-        private Tuple<ApiError, object> Disconnect(Guid user)
+        private static Tuple<ApiError, object, SendTo> Disconnect(Guid user)
         {
-            _state.AuthenticatedUsers.Remove(user);
-            
-            return new Tuple<ApiError, object>(ApiError.NoError, null);
+            Room.GetState.UserDisconnect(user);
+
+            return new Tuple<ApiError, object, SendTo>(ApiError.NoError, null, SendTo.None);
         }
 
-        private sealed class State
+        private enum Method
         {
-            public List<Guid> AuthenticatedUsers { get; } = new List<Guid>();
+            AnonymousAuth,
+            Disconnect,
         }
 
         [Serializable]
