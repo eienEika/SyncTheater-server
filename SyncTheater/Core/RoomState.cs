@@ -7,7 +7,7 @@ namespace SyncTheater.Core
 {
     internal sealed class RoomState
     {
-        private readonly List<Guid> _anonymousUsers = new List<Guid>();
+        private readonly HashSet<Guid> _anonymousUsers = new HashSet<Guid>();
         private string _currentVideoUrl;
         private bool _pause;
 
