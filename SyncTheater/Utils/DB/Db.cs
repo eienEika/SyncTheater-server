@@ -3,8 +3,9 @@ using System.Data.SQLite;
 using System.Threading.Tasks;
 using Dapper;
 using Serilog;
+using SyncTheater.Utils.DB.DTOs;
 
-namespace SyncTheater.Utils
+namespace SyncTheater.Utils.DB
 {
     internal static class Db
     {
@@ -100,6 +101,49 @@ namespace SyncTheater.Utils
             );
         }
 
+        public static bool AddUser(UserDto user)
+        {
+            using var conn = new SQLiteConnection(Configuration.DbConnectionString);
+            try
+            {
+                conn.Execute(@"INSERT INTO users (login, authKey) VALUES (@Login, @AuthKey);",
+                    new
+                    {
+                        Nickname = user.Login,
+                        user.AuthKey,
+                    }
+                );
+
+                return true;
+            }
+            catch (SQLiteException)
+            {
+                return false;
+            }
+        }
+
+        public static UserDto GetUser(string login)
+        {
+            using var conn = new SQLiteConnection(Configuration.DbConnectionString);
+            return conn.QueryFirst<UserDto>(@"SELECT * FROM users WHERE login = @Login;",
+                new
+                {
+                    Login = login,
+                }
+            );
+        }
+
+        public static UserDto GetUserByAuthKey(string authKey)
+        {
+            using var conn = new SQLiteConnection(Configuration.DbConnectionString);
+            return conn.QueryFirst<UserDto>(@"SELECT * FROM users WHERE authKey = @AuthKey;",
+                new
+                {
+                    AuthKey = authKey,
+                }
+            );
+        }
+
         private static void CreateTables()
         {
             using var conn = new SQLiteConnection(Configuration.DbConnectionString);
@@ -107,6 +151,7 @@ namespace SyncTheater.Utils
             conn.Execute(
                 @"CREATE TABLE IF NOT EXISTS secrets (server_id TEXT PRIMARY KEY, secret TEXT UNIQUE NOT NULL);"
             );
+            conn.Execute(@"CREATE TABLE IF NOT EXISTS users (login TEXT PRIMARY KEY, authKey TEXT UNIQUE NOT NULL);");
         }
     }
 }

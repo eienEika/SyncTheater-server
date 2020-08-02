@@ -10,6 +10,7 @@ using Serilog;
 using SyncTheater.Core;
 using SyncTheater.KinotheaterService.Requests;
 using SyncTheater.Utils;
+using SyncTheater.Utils.DB;
 using HttpClient = System.Net.Http.HttpClient;
 
 namespace SyncTheater.KinotheaterService

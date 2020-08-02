@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using Serilog;
+using SyncTheater.Core.Models;
 using SyncTheater.Core.Servers;
 using SyncTheater.KinotheaterService;
 using SyncTheater.Types.Exceptions;
@@ -93,11 +94,11 @@ namespace SyncTheater.Core
             Log.Information("Server stopped.");
         }
 
-        public void Send(byte[] data, IEnumerable<Guid> sendTo)
+        public void Send(byte[] data, IEnumerable<User> sendTo)
         {
-            foreach (var session in sendTo)
+            foreach (var user in sendTo)
             {
-                _server.FindSession(session).SendAsync(data);
+                _server.FindSession(user.SessionId).SendAsync(data);
             }
         }
 

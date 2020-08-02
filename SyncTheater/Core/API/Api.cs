@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SyncTheater.Core.API.Apis;
 using SyncTheater.Core.API.Types;
+using SyncTheater.Core.Models;
 using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API
@@ -37,15 +38,15 @@ namespace SyncTheater.Core.API
                 SendTo.All => Room.GetState.Users,
                 SendTo.Sender => new[]
                 {
-                    sender,
+                    new User(sender),
                 },
-                _ => new Guid[0],
+                _ => new User[0],
             };
 
             Send((ApiCode) apiCode, response, sendTos);
         }
 
-        public static void Send(ApiCode code, object data, IEnumerable<Guid> sendTo)
+        public static void Send(ApiCode code, object data, IEnumerable<User> sendTo)
         {
             Room.GetInstance.Send(Packet.Write((short) code, data.ToJson()), sendTo);
         }
@@ -72,6 +73,8 @@ namespace SyncTheater.Core.API
         UnknownMethod,
         UnknownApi,
         EmptyText = 100,
+        LoginOccupied,
+        InvalidAuthKey,
     }
 
     internal enum StateUpdateCode

@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Serilog;
 using SyncTheater.KinotheaterService;
-using SyncTheater.Utils;
+using SyncTheater.Utils.DB;
 using YamlDotNet.Serialization;
 
 namespace SyncTheater.Core
@@ -25,7 +25,7 @@ namespace SyncTheater.Core
                 && Directory.Exists(Path.Combine(Configuration.AppProfilePath, options.Id)))
             {
                 Log.Warning($"Profile `{options.Id}` is already exists. Overwrite? y/n.");
-                
+
                 if (!YesNo())
                 {
                     return false;

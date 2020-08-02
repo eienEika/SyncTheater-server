@@ -2,25 +2,32 @@ using System;
 using System.Collections.Generic;
 using SyncTheater.Core.API;
 using SyncTheater.Core.API.Types;
+using SyncTheater.Core.Models;
 
 namespace SyncTheater.Core
 {
     internal sealed class RoomState
     {
-        private readonly HashSet<Guid> _anonymousUsers = new HashSet<Guid>();
+        private readonly HashSet<User> _users = new HashSet<User>();
         private string _currentVideoUrl;
         private bool _pause;
 
-        public IEnumerable<Guid> Users => _anonymousUsers;
+        public IEnumerable<User> Users => _users;
 
-        public void UserDisconnect(Guid user)
+        public void UserDisconnect(Guid sessionId)
         {
-            _anonymousUsers.Remove(user);
+            _users.Remove(new User(sessionId));
         }
 
-        public void NewAnonymousUser(Guid user)
+        public void UserConnected(User user)
         {
-            _anonymousUsers.Add(user);
+            _users.Add(user);
+        }
+
+        public void UserRegistered(User user)
+        {
+            _users.Remove(new User(user.SessionId));
+            _users.Add(user);
         }
 
         public void SetVideoUrl(string url)
