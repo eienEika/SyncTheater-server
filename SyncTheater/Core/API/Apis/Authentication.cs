@@ -37,7 +37,7 @@ namespace SyncTheater.Core.API.Apis
 
         private static Tuple<ApiError, object, SendTo> AuthenticateAnonymous(Guid sessionId)
         {
-            Room.GetState.UserConnected(new User(sessionId));
+            Room.GetState.UserConnected(sessionId, new User());
 
             return new Tuple<ApiError, object, SendTo>(ApiError.NoError, null, SendTo.Sender);
         }
@@ -51,7 +51,7 @@ namespace SyncTheater.Core.API.Apis
 
         private static Tuple<ApiError, object, SendTo> Register(Guid sessionId, string login)
         {
-            var user = new User(sessionId, login);
+            var user = new User(login);
 
             var added = Db.AddUser(new UserDto
                 {
@@ -65,7 +65,7 @@ namespace SyncTheater.Core.API.Apis
                 return new Tuple<ApiError, object, SendTo>(ApiError.LoginOccupied, null, SendTo.Sender);
             }
 
-            Room.GetState.UserRegistered(user);
+            Room.GetState.UserRegistered(sessionId, user);
 
             return new Tuple<ApiError, object, SendTo>(ApiError.NoError,
                 new
@@ -79,14 +79,14 @@ namespace SyncTheater.Core.API.Apis
 
         private static Tuple<ApiError, object, SendTo> AuthenticateLogined(Guid sessionId, string authKey)
         {
-            var user = Db.GetUserByAuthKey(authKey)?.Entity(sessionId);
+            var user = Db.GetUserByAuthKey(authKey)?.Entity;
 
             if (user == null)
             {
                 return new Tuple<ApiError, object, SendTo>(ApiError.InvalidAuthKey, null, SendTo.Sender);
             }
 
-            Room.GetState.UserConnected(user);
+            Room.GetState.UserConnected(sessionId, user);
 
             return new Tuple<ApiError, object, SendTo>(ApiError.NoError, null, SendTo.Sender);
         }

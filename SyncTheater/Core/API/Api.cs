@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using SyncTheater.Core.API.Apis;
 using SyncTheater.Core.API.Types;
-using SyncTheater.Core.Models;
 using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API
@@ -35,18 +34,18 @@ namespace SyncTheater.Core.API
             // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
             var sendTos = sendTo switch
             {
-                SendTo.All => Room.GetState.Users,
+                SendTo.All => Room.GetState.UserSessions,
                 SendTo.Sender => new[]
                 {
-                    new User(sender),
+                    sender,
                 },
-                _ => new User[0],
+                _ => new Guid[0],
             };
 
             Send((ApiCode) apiCode, response, sendTos);
         }
 
-        public static void Send(ApiCode code, object data, IEnumerable<User> sendTo)
+        public static void Send(ApiCode code, object data, IEnumerable<Guid> sendTo)
         {
             Room.GetInstance.Send(Packet.Write((short) code, data.ToJson()), sendTo);
         }

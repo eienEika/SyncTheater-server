@@ -8,26 +8,26 @@ namespace SyncTheater.Core
 {
     internal sealed class RoomState
     {
-        private readonly HashSet<User> _users = new HashSet<User>();
+        private readonly Dictionary<Guid, User> _users = new Dictionary<Guid, User>();
         private string _currentVideoUrl;
         private bool _pause;
 
-        public IEnumerable<User> Users => _users;
+        public IEnumerable<User> Users => _users.Values;
+        public IEnumerable<Guid> UserSessions => _users.Keys;
 
         public void UserDisconnect(Guid sessionId)
         {
-            _users.Remove(new User(sessionId));
+            _users.Remove(sessionId);
         }
 
-        public void UserConnected(User user)
+        public void UserConnected(Guid sessionId, User user)
         {
-            _users.Add(user);
+            _users.Add(sessionId, user);
         }
 
-        public void UserRegistered(User user)
+        public void UserRegistered(Guid sessionId, User user)
         {
-            _users.Remove(new User(user.SessionId));
-            _users.Add(user);
+            _users[sessionId] = user;
         }
 
         public void SetVideoUrl(string url)
@@ -53,7 +53,7 @@ namespace SyncTheater.Core
                     Data = data,
                     UpdateCode = code,
                 },
-                Users
+                UserSessions
             );
         }
     }
