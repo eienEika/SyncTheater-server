@@ -23,11 +23,13 @@ namespace SyncTheater.Core.API
         {
             var (apiCode, jsonData) = Packet.Read(data);
 
+            var user = Room.GetState.User(sender);
+
             var (response, sendTo) = (ApiCode) apiCode switch
             {
-                ApiCode.Authentication => Authentication.Request(jsonData, sender),
-                ApiCode.Chat => Chat.Request(jsonData, sender),
-                ApiCode.Player => Player.Request(jsonData, sender),
+                ApiCode.Authentication => Authentication.Request(jsonData, user, sender),
+                ApiCode.Chat => Chat.Request(jsonData, user, sender),
+                ApiCode.Player => Player.Request(jsonData, user, sender),
                 _ => new Tuple<object, SendTo>(UnknownApiResponse, SendTo.Sender),
             };
 
@@ -71,6 +73,7 @@ namespace SyncTheater.Core.API
         NoError = 0,
         UnknownMethod,
         UnknownApi,
+        AuthenticationRequired,
         EmptyText = 100,
         LoginOccupied,
         InvalidAuthKey,

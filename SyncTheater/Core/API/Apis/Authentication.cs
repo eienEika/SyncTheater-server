@@ -10,7 +10,7 @@ namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Authentication : IApiComponent
     {
-        public Tuple<object, SendTo> Request(string body, Guid sender)
+        public Tuple<object, SendTo> Request(string body, User user, Guid sessionId)
         {
             Log.Verbose($"Got request to authentication with body {body}.");
 
@@ -18,10 +18,10 @@ namespace SyncTheater.Core.API.Apis
 
             var (error, data, sendTo) = request.Method switch
             {
-                Method.AnonymousAuth => AuthenticateAnonymous(sender),
-                Method.Disconnect => Disconnect(sender),
-                Method.Register => Register(sender, request.Data.Login),
-                Method.LoginedAuth => AuthenticateLogined(sender, request.Data.AuthKey),
+                Method.AnonymousAuth => AuthenticateAnonymous(sessionId),
+                Method.Disconnect => Disconnect(sessionId),
+                Method.Register => Register(sessionId, request.Data.Login),
+                Method.LoginedAuth => AuthenticateLogined(sessionId, request.Data.AuthKey),
                 _ => new Tuple<ApiError, object, SendTo>(ApiError.UnknownMethod, null, SendTo.Sender),
             };
 

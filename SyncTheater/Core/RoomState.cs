@@ -14,6 +14,7 @@ namespace SyncTheater.Core
 
         public IEnumerable<User> Users => _users.Values;
         public IEnumerable<Guid> UserSessions => _users.Keys;
+        public User User(Guid sessionId) => _users[sessionId];
 
         public void UserDisconnect(Guid sessionId)
         {
