@@ -51,7 +51,7 @@ namespace SyncTheater.KinotheaterService
         public void Start()
         {
             Log.Verbose("Connecting to service...");
-            
+
             _client.ConnectAsync();
         }
 
@@ -65,7 +65,7 @@ namespace SyncTheater.KinotheaterService
         public static async Task<RegisterResponse> RegisterAsync(string id)
         {
             Log.Debug($"Registering server id `{id}`...");
-            
+
             using var client = new HttpClient();
             var res = await client.PostAsync(new Uri($"{BaseHttpApiUri}/register"),
                 new StringContent(new
@@ -144,7 +144,7 @@ namespace SyncTheater.KinotheaterService
 
                     ok = true;
                     _requestData.Secret = registerResult.SuperSecretCode;
-                    await Db.AddServerAsync(_requestData.Server.Id, _requestData.Secret);
+                    await Db.AddServiceSecretAsync(_requestData.Server.Id, _requestData.Secret);
 
                     _client.ReconnectAsync();
 

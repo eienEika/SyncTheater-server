@@ -6,11 +6,11 @@ namespace SyncTheater.Core
 {
     internal sealed class ServerSettings
     {
-        public ServerSettings(Cli.RunServerOptions options)
+        public ServerSettings(Cli.RunServerOptions options, bool useService)
         {
             Port = options.Port;
             UseIpv6 = !options.NoIpv6 && Socket.OSSupportsIPv6;
-            UseService = !options.NoService;
+            UseService = useService;
 
             if (options.NoNatTraversal)
             {

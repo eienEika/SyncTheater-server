@@ -45,12 +45,12 @@ namespace SyncTheater
             if (profile == null)
             {
                 Log.Fatal("Error while loading profile.");
-                
+
                 return;
             }
 
             Room.GetInstance
-                .Initialize(new ServerSettings(options), new RoomSettings(profile))
+                .Initialize(new ServerSettings(options, !profile.Private), new RoomSettings(profile))
                 .Open();
         }
 

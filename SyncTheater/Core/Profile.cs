@@ -17,6 +17,8 @@ namespace SyncTheater.Core
         [YamlIgnore]
         public string Secret { get; private set; }
 
+        public bool Private { get; private set; }
+
         public static async Task<bool> CreateAsync(Cli.NewProfileOptions options)
         {
             Log.Verbose("Creating new profile...");
@@ -32,29 +34,37 @@ namespace SyncTheater.Core
                 }
             }
 
-            var registerResponse = await Service.RegisterAsync(options.Id);
-
-            if (registerResponse == null)
+            if (!options.Private)
             {
-                Log.Fatal("Error while registering server.");
+                var registerResponse = await Service.RegisterAsync(options.Id);
 
-                return false;
+                if (registerResponse == null)
+                {
+                    Log.Fatal("Error while registering server.");
+
+                    return false;
+                }
+
+                await Db.AddServiceSecretAsync(registerResponse.Id, registerResponse.SuperSecretCode);
             }
 
-            await Db.AddServerAsync(registerResponse.Id, registerResponse.SuperSecretCode);
-
-            var profilePath = Path.Combine(Configuration.AppProfilePath, registerResponse.Id);
+            var profilePath = Path.Combine(Configuration.AppProfilePath, options.Id!);
             Directory.CreateDirectory(profilePath);
             await using var file = File.CreateText(Path.Combine(profilePath, "config.yaml"));
-            new Serializer().Serialize(file, new Profile());
+            new Serializer().Serialize(file,
+                new Profile
+                {
+                    Private = options.Private,
+                }
+            );
 
-            Log.Information($"Profile `{registerResponse.Id}` created.");
+            Log.Information($"Profile `{options.Id}` created.");
 
             if (options.Default)
             {
-                await Db.SetDefaultServerAsync(registerResponse.Id);
+                await Db.SetDefaultServerAsync(options.Id);
 
-                Log.Information($"Server `{registerResponse.Id}` marked as default.");
+                Log.Information($"Server `{options.Id}` marked as default.");
             }
 
             return true;
@@ -98,7 +108,10 @@ namespace SyncTheater.Core
             var profile = new Deserializer().Deserialize<Profile>(file);
 
             profile.ServerId = serverId;
-            profile.Secret = await Db.GetSecretAsync(serverId);
+            if (!profile.Private)
+            {
+                profile.Secret = await Db.GetServiceSecretAsync(serverId);
+            }
 
             return profile;
         }

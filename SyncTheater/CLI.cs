@@ -18,6 +18,9 @@ namespace SyncTheater
             [Option('i', "id", Required = true, HelpText = "Server id.")]
             public string Id { get; set; }
 
+            [Option("private", Default = false, HelpText = "Don't use SyncTheater's service.")]
+            public bool Private { get; set; }
+
             [Option('v', "verbosity", Default = 4, HelpText = "Verbosity level, from 1 to 6.")]
             public int Verbosity { get; set; }
 
@@ -60,9 +63,6 @@ namespace SyncTheater
 
             [Option("no-upnp", Default = false, HelpText = "Disable Universal Plug and Play.")]
             public bool NoUpnp { get; set; }
-
-            [Option("private", Default = false, HelpText = "Do not use Kinotheater's service.")]
-            public bool NoService { get; set; }
 
             [Option('p', "port", Default = 9128, HelpText = "Port to bind.")]
             public int Port { get; set; }

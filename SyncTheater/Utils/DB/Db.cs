@@ -14,7 +14,7 @@ namespace SyncTheater.Utils.DB
             CreateTables();
         }
 
-        public static async Task AddServerAsync(string serverId, string secret)
+        public static async Task AddServiceSecretAsync(string serverId, string secret)
         {
             Log.Verbose($"Writing secret of server `{serverId}`...");
 
@@ -31,11 +31,11 @@ namespace SyncTheater.Utils.DB
             }
             catch (SQLiteException)
             {
-                await UpdateServerSecret(serverId, secret);
+                await UpdateServiceSecret(serverId, secret);
             }
         }
 
-        public static async Task<string> GetSecretAsync(string serverId)
+        public static async Task<string> GetServiceSecretAsync(string serverId)
         {
             await using var conn = new SQLiteConnection(Configuration.DbConnectionString);
             return await conn.QueryFirstAsync<string>(@"SELECT secret FROM secrets WHERE server_id = @ServerId;",
@@ -87,7 +87,7 @@ namespace SyncTheater.Utils.DB
             }
         }
 
-        private static async Task UpdateServerSecret(string serverId, string secret)
+        private static async Task UpdateServiceSecret(string serverId, string secret)
         {
             Log.Debug($"Overwriting server `{serverId}`...");
 
@@ -149,7 +149,7 @@ namespace SyncTheater.Utils.DB
             using var conn = new SQLiteConnection(Configuration.DbConnectionString);
             conn.Execute(@"CREATE TABLE IF NOT EXISTS default_server (val TEXT);");
             conn.Execute(
-                @"CREATE TABLE IF NOT EXISTS secrets (server_id TEXT PRIMARY KEY, secret TEXT UNIQUE NOT NULL);"
+                @"CREATE TABLE IF NOT EXISTS service_secrets (server_id TEXT PRIMARY KEY, secret TEXT UNIQUE NOT NULL);"
             );
             conn.Execute(@"CREATE TABLE IF NOT EXISTS users (login TEXT PRIMARY KEY, authKey TEXT UNIQUE NOT NULL);");
         }
