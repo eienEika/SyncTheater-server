@@ -6,9 +6,9 @@ using SyncTheater.Core;
 
 namespace SyncTheater
 {
-    internal static class Program
+    public static class Program
     {
-        private static void Main(string[] args)
+        public static void Main(string[] args)
         {
             Console.CancelKeyPress += CancelHandler;
 
@@ -19,7 +19,7 @@ namespace SyncTheater
             Stop();
         }
 
-        private static async Task CreateProfile(Cli.NewProfileOptions options)
+        public static async Task CreateProfile(Cli.NewProfileOptions options)
         {
             if (!options.Validate())
             {
@@ -31,7 +31,7 @@ namespace SyncTheater
             await Profile.CreateAsync(options);
         }
 
-        private static async Task Run(Cli.RunServerOptions options)
+        public static async Task Run(Cli.RunServerOptions options)
         {
             if (!options.Validate())
             {
@@ -54,7 +54,7 @@ namespace SyncTheater
                 .Open();
         }
 
-        private static void Stop()
+        public static void Stop()
         {
             var room = Room.GetInstance;
 
