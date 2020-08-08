@@ -6,9 +6,12 @@ using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API.Apis
 {
-    internal sealed class Chat : IApiComponent
+    internal sealed class Chat : ApiComponentBase
     {
-        public Tuple<object, Api.SendTo> Request(string body, User user, Guid sessionId)
+        private static readonly Tuple<ApiError, object, Api.SendTo> EmptyTextError =
+            new Tuple<ApiError, object, Api.SendTo>(ApiError.EmptyText, null, Api.SendTo.Sender);
+
+        public override Tuple<object, Api.SendTo> Request(string body, User user, Guid sessionId)
         {
             Log.Verbose($"Got request to chat with body {body}.");
 
@@ -48,12 +51,12 @@ namespace SyncTheater.Core.API.Apis
 
             if (user.IsAnonymous)
             {
-                return new Tuple<ApiError, object, Api.SendTo>(ApiError.AuthenticationRequired, null, Api.SendTo.Sender);
+                return AuthenticationRequiredError;
             }
 
             if (string.IsNullOrWhiteSpace(text))
             {
-                return new Tuple<ApiError, object, Api.SendTo>(ApiError.EmptyText, null, Api.SendTo.Sender);
+                return EmptyTextError;
             }
 
             return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError,

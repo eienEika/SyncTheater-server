@@ -8,9 +8,15 @@ using SyncTheater.Utils.DB.DTOs;
 
 namespace SyncTheater.Core.API.Apis
 {
-    internal sealed class Authentication : IApiComponent
+    internal sealed class Authentication : ApiComponentBase
     {
-        public Tuple<object, Api.SendTo> Request(string body, User user, Guid sessionId)
+        private static readonly Tuple<ApiError, object, Api.SendTo> LoginOccupiedError =
+            new Tuple<ApiError, object, Api.SendTo>(ApiError.LoginOccupied, null, Api.SendTo.Sender);
+
+        private static readonly Tuple<ApiError, object, Api.SendTo> InvalidAuthKeyError =
+            new Tuple<ApiError, object, Api.SendTo>(ApiError.InvalidAuthKey, null, Api.SendTo.Sender);
+
+        public override Tuple<object, Api.SendTo> Request(string body, User user, Guid sessionId)
         {
             Log.Verbose($"Got request to authentication with body {body}.");
 
@@ -39,14 +45,14 @@ namespace SyncTheater.Core.API.Apis
         {
             Room.GetState.UserConnected(sessionId, new User());
 
-            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError, null, Api.SendTo.Sender);
+            return NoError;
         }
 
         private static Tuple<ApiError, object, Api.SendTo> Disconnect(Guid sessionId)
         {
             Room.GetState.UserDisconnect(sessionId);
 
-            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError, null, Api.SendTo.None);
+            return Nothing;
         }
 
         private static Tuple<ApiError, object, Api.SendTo> Register(Guid sessionId, string login)
@@ -62,7 +68,7 @@ namespace SyncTheater.Core.API.Apis
 
             if (!added)
             {
-                return new Tuple<ApiError, object, Api.SendTo>(ApiError.LoginOccupied, null, Api.SendTo.Sender);
+                return LoginOccupiedError;
             }
 
             Room.GetState.UserRegistered(sessionId, user);
@@ -83,12 +89,12 @@ namespace SyncTheater.Core.API.Apis
 
             if (user == null)
             {
-                return new Tuple<ApiError, object, Api.SendTo>(ApiError.InvalidAuthKey, null, Api.SendTo.Sender);
+                return InvalidAuthKeyError;
             }
 
             Room.GetState.UserConnected(sessionId, user);
 
-            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError, null, Api.SendTo.Sender);
+            return NoError;
         }
 
         [Serializable]

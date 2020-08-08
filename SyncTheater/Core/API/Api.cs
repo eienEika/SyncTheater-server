@@ -22,9 +22,9 @@ namespace SyncTheater.Core.API
             Method = null,
         };
 
-        private static readonly IApiComponent Authentication = new Authentication();
-        private static readonly IApiComponent Chat = new Chat();
-        private static readonly IApiComponent Player = new Player();
+        private static readonly ApiComponentBase Authentication = new Authentication();
+        private static readonly ApiComponentBase Chat = new Chat();
+        private static readonly ApiComponentBase Player = new Player();
 
         public static void ReadAndExecute(byte[] data, Guid sender)
         {

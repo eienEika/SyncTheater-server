@@ -6,9 +6,9 @@ using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API.Apis
 {
-    internal sealed class Player : IApiComponent
+    internal sealed class Player : ApiComponentBase
     {
-        public Tuple<object, Api.SendTo> Request(string body, User user, Guid sessionId)
+        public override Tuple<object, Api.SendTo> Request(string body, User user, Guid sessionId)
         {
             Log.Verbose($"Got request to player with body {body}.");
 
@@ -47,24 +47,24 @@ namespace SyncTheater.Core.API.Apis
         {
             if (user.IsAnonymous)
             {
-                return new Tuple<ApiError, object, Api.SendTo>(ApiError.AuthenticationRequired, null, Api.SendTo.Sender);
+                return AuthenticationRequiredError;
             }
 
             Room.GetState.SetVideoUrl(url);
 
-            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError, null, Api.SendTo.Sender);
+            return NoError;
         }
 
         private static Tuple<ApiError, object, Api.SendTo> PauseCycle(User user)
         {
             if (user.IsAnonymous)
             {
-                return new Tuple<ApiError, object, Api.SendTo>(ApiError.AuthenticationRequired, null, Api.SendTo.Sender);
+                return AuthenticationRequiredError;
             }
 
             Room.GetState.PauseCycle();
 
-            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError, null, Api.SendTo.Sender);
+            return NoError;
         }
 
         [Serializable]
