@@ -86,7 +86,10 @@ namespace SyncTheater.Core
                 NatTraversal.ClearAsync(ServerSettings.Nat.ForwardingResult.PublicPort).GetAwaiter();
             }
 
-            _service.Stop();
+            if (ServerSettings.UseService)
+            {
+                _service.Stop();
+            }
 
             Log.Verbose("Stopping server...");
             _server.Stop();
