@@ -8,31 +8,31 @@ namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Chat : IApiComponent
     {
-        public Tuple<object, SendTo> Request(string body, User user, Guid sessionId)
+        public Tuple<object, Api.SendTo> Request(string body, User user, Guid sessionId)
         {
             Log.Verbose($"Got request to chat with body {body}.");
 
-            var request = SerializationUtils.Deserialize<IncomeData<Method, Model>>(body);
+            var request = SerializationUtils.Deserialize<IncomeData<Model>>(body);
 
             if (user == null)
             {
-                return new Tuple<object, SendTo>(new OutcomeData<Method>
+                return new Tuple<object, Api.SendTo>(new OutcomeData
                     {
                         Data = null,
                         Error = ApiError.AuthenticationRequired,
                         Method = request.Method,
                     },
-                    SendTo.Sender
+                    Api.SendTo.Sender
                 );
             }
 
             var (error, data, sendTo) = request.Method switch
             {
-                Method.NewMessage => NewMessage(user, request.Data.Text),
-                _ => new Tuple<ApiError, object, SendTo>(ApiError.UnknownMethod, null, SendTo.Sender),
+                Methods.Chat.NewMessage => NewMessage(user, request.Data.Text),
+                _ => new Tuple<ApiError, object, Api.SendTo>(ApiError.UnknownMethod, null, Api.SendTo.Sender),
             };
 
-            return new Tuple<object, SendTo>(new OutcomeData<Method>
+            return new Tuple<object, Api.SendTo>(new OutcomeData
                 {
                     Data = data,
                     Error = error,
@@ -42,32 +42,27 @@ namespace SyncTheater.Core.API.Apis
             );
         }
 
-        private static Tuple<ApiError, object, SendTo> NewMessage(User user, string text)
+        private static Tuple<ApiError, object, Api.SendTo> NewMessage(User user, string text)
         {
             Log.Debug($"Chat API: NewMessage request, text: \"{text}\"");
 
             if (user.IsAnonymous)
             {
-                return new Tuple<ApiError, object, SendTo>(ApiError.AuthenticationRequired, null, SendTo.Sender);
+                return new Tuple<ApiError, object, Api.SendTo>(ApiError.AuthenticationRequired, null, Api.SendTo.Sender);
             }
 
             if (string.IsNullOrWhiteSpace(text))
             {
-                return new Tuple<ApiError, object, SendTo>(ApiError.EmptyText, null, SendTo.Sender);
+                return new Tuple<ApiError, object, Api.SendTo>(ApiError.EmptyText, null, Api.SendTo.Sender);
             }
 
-            return new Tuple<ApiError, object, SendTo>(ApiError.NoError,
+            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError,
                 new
                 {
                     Text = text,
                 },
-                SendTo.All
+                Api.SendTo.All
             );
-        }
-
-        private enum Method
-        {
-            NewMessage,
         }
 
         [Serializable]

@@ -3,9 +3,9 @@ using System;
 namespace SyncTheater.Core.API.Types
 {
     [Serializable]
-    internal class OutcomeData<T> where T : Enum
+    internal class OutcomeData
     {
-        public T Method { get; set; }
+        public string Method { get; set; }
         public ApiError Error { get; set; }
         public object Data { get; set; }
     }

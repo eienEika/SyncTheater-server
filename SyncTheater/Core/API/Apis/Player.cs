@@ -8,32 +8,32 @@ namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Player : IApiComponent
     {
-        public Tuple<object, SendTo> Request(string body, User user, Guid sessionId)
+        public Tuple<object, Api.SendTo> Request(string body, User user, Guid sessionId)
         {
             Log.Verbose($"Got request to player with body {body}.");
 
-            var request = SerializationUtils.Deserialize<IncomeData<Method, Model>>(body);
+            var request = SerializationUtils.Deserialize<IncomeData<Model>>(body);
 
             if (user == null)
             {
-                return new Tuple<object, SendTo>(new OutcomeData<Method>
+                return new Tuple<object, Api.SendTo>(new OutcomeData
                     {
                         Data = null,
                         Error = ApiError.AuthenticationRequired,
                         Method = request.Method,
                     },
-                    SendTo.Sender
+                    Api.SendTo.Sender
                 );
             }
 
             var (error, data, sendTo) = request.Method switch
             {
-                Method.PauseCycle => PauseCycle(user),
-                Method.SetVideo => SetVideo(user, request.Data.Url),
-                _ => new Tuple<ApiError, object, SendTo>(ApiError.UnknownMethod, null, SendTo.Sender),
+                Methods.Player.PauseCycle => PauseCycle(user),
+                Methods.Player.SetVideo => SetVideo(user, request.Data.Url),
+                _ => new Tuple<ApiError, object, Api.SendTo>(ApiError.UnknownMethod, null, Api.SendTo.Sender),
             };
 
-            return new Tuple<object, SendTo>(new OutcomeData<Method>
+            return new Tuple<object, Api.SendTo>(new OutcomeData
                 {
                     Data = data,
                     Error = error,
@@ -43,34 +43,28 @@ namespace SyncTheater.Core.API.Apis
             );
         }
 
-        private static Tuple<ApiError, object, SendTo> SetVideo(User user, string url)
+        private static Tuple<ApiError, object, Api.SendTo> SetVideo(User user, string url)
         {
             if (user.IsAnonymous)
             {
-                return new Tuple<ApiError, object, SendTo>(ApiError.AuthenticationRequired, null, SendTo.Sender);
+                return new Tuple<ApiError, object, Api.SendTo>(ApiError.AuthenticationRequired, null, Api.SendTo.Sender);
             }
 
             Room.GetState.SetVideoUrl(url);
 
-            return new Tuple<ApiError, object, SendTo>(ApiError.NoError, null, SendTo.Sender);
+            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError, null, Api.SendTo.Sender);
         }
 
-        private static Tuple<ApiError, object, SendTo> PauseCycle(User user)
+        private static Tuple<ApiError, object, Api.SendTo> PauseCycle(User user)
         {
             if (user.IsAnonymous)
             {
-                return new Tuple<ApiError, object, SendTo>(ApiError.AuthenticationRequired, null, SendTo.Sender);
+                return new Tuple<ApiError, object, Api.SendTo>(ApiError.AuthenticationRequired, null, Api.SendTo.Sender);
             }
 
             Room.GetState.PauseCycle();
 
-            return new Tuple<ApiError, object, SendTo>(ApiError.NoError, null, SendTo.Sender);
-        }
-
-        private enum Method
-        {
-            SetVideo,
-            PauseCycle,
+            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError, null, Api.SendTo.Sender);
         }
 
         [Serializable]

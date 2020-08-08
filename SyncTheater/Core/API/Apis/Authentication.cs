@@ -10,22 +10,22 @@ namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Authentication : IApiComponent
     {
-        public Tuple<object, SendTo> Request(string body, User user, Guid sessionId)
+        public Tuple<object, Api.SendTo> Request(string body, User user, Guid sessionId)
         {
             Log.Verbose($"Got request to authentication with body {body}.");
 
-            var request = SerializationUtils.Deserialize<IncomeData<Method, Model>>(body);
+            var request = SerializationUtils.Deserialize<IncomeData<Model>>(body);
 
             var (error, data, sendTo) = request.Method switch
             {
-                Method.AnonymousAuth => AuthenticateAnonymous(sessionId),
-                Method.Disconnect => Disconnect(sessionId),
-                Method.Register => Register(sessionId, request.Data.Login),
-                Method.LoginedAuth => AuthenticateLogined(sessionId, request.Data.AuthKey),
-                _ => new Tuple<ApiError, object, SendTo>(ApiError.UnknownMethod, null, SendTo.Sender),
+                Methods.Authentication.AuthAnon => AuthenticateAnonymous(sessionId),
+                Methods.Authentication.Disconnect => Disconnect(sessionId),
+                Methods.Authentication.Register => Register(sessionId, request.Data.Login),
+                Methods.Authentication.AuthLogin => AuthenticateLogined(sessionId, request.Data.AuthKey),
+                _ => new Tuple<ApiError, object, Api.SendTo>(ApiError.UnknownMethod, null, Api.SendTo.Sender),
             };
 
-            return new Tuple<object, SendTo>(new OutcomeData<Method>
+            return new Tuple<object, Api.SendTo>(new OutcomeData
                 {
                     Data = data,
                     Error = error,
@@ -35,21 +35,21 @@ namespace SyncTheater.Core.API.Apis
             );
         }
 
-        private static Tuple<ApiError, object, SendTo> AuthenticateAnonymous(Guid sessionId)
+        private static Tuple<ApiError, object, Api.SendTo> AuthenticateAnonymous(Guid sessionId)
         {
             Room.GetState.UserConnected(sessionId, new User());
 
-            return new Tuple<ApiError, object, SendTo>(ApiError.NoError, null, SendTo.Sender);
+            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError, null, Api.SendTo.Sender);
         }
 
-        private static Tuple<ApiError, object, SendTo> Disconnect(Guid sessionId)
+        private static Tuple<ApiError, object, Api.SendTo> Disconnect(Guid sessionId)
         {
             Room.GetState.UserDisconnect(sessionId);
 
-            return new Tuple<ApiError, object, SendTo>(ApiError.NoError, null, SendTo.None);
+            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError, null, Api.SendTo.None);
         }
 
-        private static Tuple<ApiError, object, SendTo> Register(Guid sessionId, string login)
+        private static Tuple<ApiError, object, Api.SendTo> Register(Guid sessionId, string login)
         {
             var user = new User(login);
 
@@ -62,41 +62,33 @@ namespace SyncTheater.Core.API.Apis
 
             if (!added)
             {
-                return new Tuple<ApiError, object, SendTo>(ApiError.LoginOccupied, null, SendTo.Sender);
+                return new Tuple<ApiError, object, Api.SendTo>(ApiError.LoginOccupied, null, Api.SendTo.Sender);
             }
 
             Room.GetState.UserRegistered(sessionId, user);
 
-            return new Tuple<ApiError, object, SendTo>(ApiError.NoError,
+            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError,
                 new
                 {
                     Login = login,
                     user.AuthKey,
                 },
-                SendTo.Sender
+                Api.SendTo.Sender
             );
         }
 
-        private static Tuple<ApiError, object, SendTo> AuthenticateLogined(Guid sessionId, string authKey)
+        private static Tuple<ApiError, object, Api.SendTo> AuthenticateLogined(Guid sessionId, string authKey)
         {
             var user = Db.GetUserByAuthKey(authKey)?.Entity;
 
             if (user == null)
             {
-                return new Tuple<ApiError, object, SendTo>(ApiError.InvalidAuthKey, null, SendTo.Sender);
+                return new Tuple<ApiError, object, Api.SendTo>(ApiError.InvalidAuthKey, null, Api.SendTo.Sender);
             }
 
             Room.GetState.UserConnected(sessionId, user);
 
-            return new Tuple<ApiError, object, SendTo>(ApiError.NoError, null, SendTo.Sender);
-        }
-
-        private enum Method
-        {
-            AnonymousAuth,
-            Disconnect,
-            Register,
-            LoginedAuth,
+            return new Tuple<ApiError, object, Api.SendTo>(ApiError.NoError, null, Api.SendTo.Sender);
         }
 
         [Serializable]

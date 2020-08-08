@@ -8,7 +8,14 @@ namespace SyncTheater.Core.API
 {
     internal static class Api
     {
-        private static readonly object UnknownApiResponse = new OutcomeData<Enum>
+        public enum SendTo
+        {
+            None,
+            All,
+            Sender,
+        }
+
+        private static readonly object UnknownApiResponse = new OutcomeData
         {
             Data = null,
             Error = ApiError.UnknownApi,
@@ -51,37 +58,5 @@ namespace SyncTheater.Core.API
         {
             Room.GetInstance.Send(Packet.Write((short) code, data.ToJson()), sendTo);
         }
-    }
-
-    internal enum ApiCode : short
-    {
-        State,
-        Chat,
-        Player,
-        Authentication,
-    }
-
-    internal enum SendTo
-    {
-        None,
-        All,
-        Sender,
-    }
-
-    internal enum ApiError
-    {
-        NoError = 0,
-        UnknownMethod,
-        UnknownApi,
-        AuthenticationRequired,
-        EmptyText = 100,
-        LoginOccupied,
-        InvalidAuthKey,
-    }
-
-    internal enum StateUpdateCode
-    {
-        VideoUrl,
-        Pause,
     }
 }
