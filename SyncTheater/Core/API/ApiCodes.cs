@@ -24,7 +24,8 @@ namespace SyncTheater.Core.API
 
     internal enum ApiCode : short
     {
-        State,
+        InError = -123,
+        State = 0,
         Chat,
         Player,
         Authentication,

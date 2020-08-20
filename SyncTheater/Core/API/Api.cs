@@ -32,7 +32,7 @@ namespace SyncTheater.Core.API
 
             var user = Room.GetState.User(sender);
 
-            var (response, sendTo) = (ApiCode) apiCode switch
+            var (response, sendTo) = apiCode switch
             {
                 ApiCode.Authentication => Authentication.Request(jsonData, user, sender),
                 ApiCode.Chat => Chat.Request(jsonData, user, sender),
@@ -51,12 +51,12 @@ namespace SyncTheater.Core.API
                 _ => new Guid[0],
             };
 
-            Send((ApiCode) apiCode, response, sendTos);
+            Send(apiCode, response, sendTos);
         }
 
         public static void Send(ApiCode code, object data, IEnumerable<Guid> sendTo)
         {
-            Room.GetInstance.Send(Packet.Write((short) code, data.ToJson()), sendTo);
+            Room.GetInstance.Send(Packet.Write(code, data.ToJson()), sendTo);
         }
     }
 }

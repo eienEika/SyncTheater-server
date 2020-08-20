@@ -9,7 +9,7 @@ namespace SyncTheater.Core.API
         private const int ApiCodeSize = 2;
         private const int DataLengthSize = 2;
 
-        public static Tuple<short, string> Read(byte[] data)
+        public static Tuple<ApiCode, string> Read(byte[] data)
         {
             Log.Verbose("Reading new packet...");
 
@@ -34,17 +34,17 @@ namespace SyncTheater.Core.API
             {
                 Log.Debug("Cannot read data.");
 
-                return new Tuple<short, string>(-1, "");
+                return new Tuple<ApiCode, string>(ApiCode.InError, "");
             }
 
-            return new Tuple<short, string>(api, jsonData);
+            return new Tuple<ApiCode, string>((ApiCode) api, jsonData);
         }
 
-        public static byte[] Write(short apiCode, string body)
+        public static byte[] Write(ApiCode apiCode, string body)
         {
             Log.Verbose($"Writing {body} to packet...");
 
-            var api = BitConverter.GetBytes(apiCode);
+            var api = BitConverter.GetBytes((short) apiCode);
             var data = Encoding.UTF8.GetBytes(body);
             var size = BitConverter.GetBytes((short) data.Length);
 
