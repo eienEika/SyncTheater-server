@@ -46,5 +46,7 @@ namespace SyncTheater.Core.API
     {
         VideoUrl,
         Pause,
+        UserConnected,
+        UserDisconnected,
     }
 }

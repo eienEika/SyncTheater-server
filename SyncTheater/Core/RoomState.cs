@@ -18,17 +18,22 @@ namespace SyncTheater.Core
 
         public void UserDisconnect(Guid sessionId)
         {
+            var user = _users[sessionId].Login;
             _users.Remove(sessionId);
+            Update(StateUpdateCode.UserDisconnected, user);
         }
 
         public void UserConnected(Guid sessionId, User user)
         {
             _users.Add(sessionId, user);
+            Update(StateUpdateCode.UserConnected, user.Login);
         }
 
         public void UserRegistered(Guid sessionId, User user)
         {
             _users[sessionId] = user;
+            Update(StateUpdateCode.UserDisconnected, null);
+            Update(StateUpdateCode.UserConnected, user.Login);
         }
 
         public void SetVideoUrl(string url)
