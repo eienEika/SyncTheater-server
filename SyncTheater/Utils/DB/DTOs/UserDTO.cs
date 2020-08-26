@@ -9,6 +9,6 @@ namespace SyncTheater.Utils.DB.DTOs
         public string Login { get; set; }
         public string AuthKey { get; set; }
 
-        public User Entity => new User(Login, AuthKey);
+        public User Entity(Guid sessionId) => new User(sessionId, Login, AuthKey);
     }
 }

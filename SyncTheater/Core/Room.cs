@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Net;
 using Serilog;
 using SyncTheater.Core.Servers;
@@ -96,12 +95,9 @@ namespace SyncTheater.Core
             Log.Information("Server stopped.");
         }
 
-        public void Send(byte[] data, IEnumerable<Guid> sessions)
+        public void Send(byte[] data, Guid session)
         {
-            foreach (var session in sessions)
-            {
-                _server.FindSession(session).SendAsync(data);
-            }
+            _server.FindSession(session).SendAsync(data);
         }
 
         private void MainLoop()

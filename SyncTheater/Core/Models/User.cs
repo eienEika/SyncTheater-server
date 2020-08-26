@@ -5,44 +5,36 @@ namespace SyncTheater.Core.Models
 {
     internal sealed class User : IEquatable<User>
     {
-        public User()
+        public User(Guid sessionId)
         {
+            SessionId = sessionId;
             IsAnonymous = true;
         }
 
-        public User(string login)
+        public User(Guid sessionId, string login)
         {
+            SessionId = sessionId;
             Login = login;
             AuthKey = KeyGenerator.GetKey();
         }
 
-        public User(string login, string authKey)
+        public User(Guid sessionId, string login, string authKey)
         {
+            SessionId = sessionId;
             Login = login;
             AuthKey = authKey;
         }
 
+        public Guid SessionId { get; }
         public string Login { get; }
         public string AuthKey { get; }
         public bool IsAnonymous { get; }
 
-        public bool Equals(User other)
-        {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            return Login == other.Login
-                   && AuthKey == other.AuthKey;
-        }
+        public bool Equals(User other) =>
+            !ReferenceEquals(null, other) && (ReferenceEquals(this, other) || SessionId.Equals(other.SessionId));
 
         public override bool Equals(object obj) => ReferenceEquals(this, obj) || obj is User other && Equals(other);
-        public override int GetHashCode() => HashCode.Combine(Login, AuthKey);
+
+        public override int GetHashCode() => SessionId.GetHashCode();
     }
 }

@@ -3,7 +3,7 @@ using System;
 namespace SyncTheater.Core.API.Types
 {
     [Serializable]
-    internal class OutcomeData
+    internal class ApiRequestResponse
     {
         public string Method { get; set; }
         public ApiError Error { get; set; }

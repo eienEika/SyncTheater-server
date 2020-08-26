@@ -3,9 +3,9 @@ using System;
 namespace SyncTheater.Core.API.Types
 {
     [Serializable]
-    internal sealed class StateUpdate
+    internal sealed class ServerNotification
     {
-        public StateUpdateCode UpdateCode { get; set; }
+        public string Type { get; set; }
         public object Data { get; set; }
     }
 }

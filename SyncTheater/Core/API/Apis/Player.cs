@@ -8,7 +8,7 @@ namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Player : ApiComponentBase
     {
-        public override Tuple<object, Api.SendTo> Request(string body, User user, Guid sessionId)
+        public override object Request(string body, User user)
         {
             Log.Verbose($"Got request to player with body {body}.");
 
@@ -16,34 +16,30 @@ namespace SyncTheater.Core.API.Apis
 
             if (user == null)
             {
-                return new Tuple<object, Api.SendTo>(new OutcomeData
-                    {
-                        Data = null,
-                        Error = ApiError.AuthenticationRequired,
-                        Method = request.Method,
-                    },
-                    Api.SendTo.Sender
-                );
+                return new ApiRequestResponse
+                {
+                    Data = null,
+                    Error = ApiError.AuthenticationRequired,
+                    Method = request.Method,
+                };
             }
 
-            var (error, data, sendTo) = request.Method switch
+            var (error, data) = request.Method switch
             {
                 Methods.Player.PauseCycle => PauseCycle(user),
                 Methods.Player.SetVideo => SetVideo(user, request.Data.Url),
-                _ => new Tuple<ApiError, object, Api.SendTo>(ApiError.UnknownMethod, null, Api.SendTo.Sender),
+                _ => new Tuple<ApiError, object>(ApiError.UnknownMethod, null),
             };
 
-            return new Tuple<object, Api.SendTo>(new OutcomeData
-                {
-                    Data = data,
-                    Error = error,
-                    Method = request.Method,
-                },
-                sendTo
-            );
+            return new ApiRequestResponse
+            {
+                Data = data,
+                Error = error,
+                Method = request.Method,
+            };
         }
 
-        private static Tuple<ApiError, object, Api.SendTo> SetVideo(User user, string url)
+        private static Tuple<ApiError, object> SetVideo(User user, string url)
         {
             if (user.IsAnonymous)
             {
@@ -55,7 +51,7 @@ namespace SyncTheater.Core.API.Apis
             return NoError;
         }
 
-        private static Tuple<ApiError, object, Api.SendTo> PauseCycle(User user)
+        private static Tuple<ApiError, object> PauseCycle(User user)
         {
             if (user.IsAnonymous)
             {

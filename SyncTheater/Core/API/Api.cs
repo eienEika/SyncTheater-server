@@ -8,14 +8,7 @@ namespace SyncTheater.Core.API
 {
     internal static class Api
     {
-        public enum SendTo
-        {
-            None,
-            All,
-            Sender,
-        }
-
-        private static readonly object UnknownApiResponse = new OutcomeData
+        private static readonly object UnknownApiResponse = new ApiRequestResponse
         {
             Data = null,
             Error = ApiError.UnknownApi,
@@ -32,31 +25,33 @@ namespace SyncTheater.Core.API
 
             var user = Room.GetState.User(sender);
 
-            var (response, sendTo) = apiCode switch
+            var response = apiCode switch
             {
-                ApiCode.Authentication => Authentication.Request(jsonData, user, sender),
-                ApiCode.Chat => Chat.Request(jsonData, user, sender),
-                ApiCode.Player => Player.Request(jsonData, user, sender),
-                _ => new Tuple<object, SendTo>(UnknownApiResponse, SendTo.Sender),
+                ApiCode.Authentication => Authentication.Request(jsonData, user),
+                ApiCode.Chat => Chat.Request(jsonData, user),
+                ApiCode.Player => Player.Request(jsonData, user),
+                _ => UnknownApiResponse,
             };
 
-            // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
-            var sendTos = sendTo switch
-            {
-                SendTo.All => Room.GetState.UserSessions,
-                SendTo.Sender => new[]
-                {
-                    sender,
-                },
-                _ => new Guid[0],
-            };
-
-            Send(apiCode, response, sendTos);
+            Send(apiCode, response, sender);
         }
 
-        public static void Send(ApiCode code, object data, IEnumerable<Guid> sendTo)
+        public static void SendNotification(ServerNotification notification)
+        {
+            Send(ApiCode.Notification, notification, Room.GetState.UserSessions);
+        }
+
+        private static void Send(ApiCode code, object data, Guid sendTo)
         {
             Room.GetInstance.Send(Packet.Write(code, data.ToJson()), sendTo);
+        }
+
+        private static void Send(ApiCode code, object data, IEnumerable<Guid> sendTo)
+        {
+            foreach (var sessionId in sendTo)
+            {
+                Room.GetInstance.Send(Packet.Write(code, data.ToJson()), sessionId);
+            }
         }
     }
 }

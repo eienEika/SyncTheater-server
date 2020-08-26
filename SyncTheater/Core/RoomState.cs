@@ -12,54 +12,50 @@ namespace SyncTheater.Core
         private string _currentVideoUrl;
         private bool _pause;
 
-        public IEnumerable<User> Users => _users.Values;
         public IEnumerable<Guid> UserSessions => _users.Keys;
-        public User User(Guid sessionId) => _users[sessionId];
+        public User User(Guid sessionId) => _users.ContainsKey(sessionId) ? _users[sessionId] : new User(sessionId);
 
-        public void UserDisconnect(Guid sessionId)
+        public void UserDisconnect(User user)
         {
-            var user = _users[sessionId].Login;
-            _users.Remove(sessionId);
-            Update(StateUpdateCode.UserDisconnected, user);
+            _users.Remove(user.SessionId);
+            Update(Notifications.UserDisconnected, user.Login);
         }
 
-        public void UserConnected(Guid sessionId, User user)
+        public void UserConnected(User user)
         {
-            _users.Add(sessionId, user);
-            Update(StateUpdateCode.UserConnected, user.Login);
+            _users.Add(user.SessionId, user);
+            Update(Notifications.UserConnected, user.Login);
         }
 
-        public void UserRegistered(Guid sessionId, User user)
+        public void UserRegistered(User user)
         {
-            _users[sessionId] = user;
-            Update(StateUpdateCode.UserDisconnected, null);
-            Update(StateUpdateCode.UserConnected, user.Login);
+            _users[user.SessionId] = user;
+            Update(Notifications.UserDisconnected, null);
+            Update(Notifications.UserConnected, user.Login);
         }
 
         public void SetVideoUrl(string url)
         {
             _currentVideoUrl = url;
-            Update(StateUpdateCode.VideoUrl, _currentVideoUrl);
+            Update(Notifications.VideoUrl, _currentVideoUrl);
 
             _pause = false;
-            Update(StateUpdateCode.Pause, _pause);
+            Update(Notifications.Pause, _pause);
         }
 
         public void PauseCycle()
         {
             _pause = !_pause;
-            Update(StateUpdateCode.Pause, _pause);
+            Update(Notifications.Pause, _pause);
         }
 
-        private void Update(StateUpdateCode code, object data)
+        private static void Update(string type, object data)
         {
-            Api.Send(ApiCode.State,
-                new StateUpdate
+            Api.SendNotification(new ServerNotification
                 {
                     Data = data,
-                    UpdateCode = code,
-                },
-                UserSessions
+                    Type = type,
+                }
             );
         }
     }
