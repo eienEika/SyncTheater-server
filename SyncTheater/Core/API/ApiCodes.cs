@@ -25,7 +25,7 @@ namespace SyncTheater.Core.API
     public static class Notifications
     {
         public const string VideoUrl = "VideoUrl";
-        public const string Pause = "Pause";
+        public const string VideoPause = "VideoPause";
         public const string UserConnected = "UserConnected";
         public const string UserDisconnected = "UserDisconnected";
         public const string NewChatMessage = "NewChatMessage";

@@ -40,13 +40,13 @@ namespace SyncTheater.Core
             Update(Notifications.VideoUrl, _currentVideoUrl);
 
             _pause = false;
-            Update(Notifications.Pause, _pause);
+            Update(Notifications.VideoPause, _pause);
         }
 
         public void PauseCycle()
         {
             _pause = !_pause;
-            Update(Notifications.Pause, _pause);
+            Update(Notifications.VideoPause, _pause);
         }
 
         private static void Update(string type, object data)
