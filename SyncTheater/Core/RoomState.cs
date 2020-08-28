@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SyncTheater.Core.API;
 using SyncTheater.Core.API.Types;
 using SyncTheater.Core.Models;
@@ -11,6 +12,15 @@ namespace SyncTheater.Core
         private readonly Dictionary<Guid, User> _users = new Dictionary<Guid, User>();
         private string _currentVideoUrl;
         private bool _pause;
+
+        private RoomStateData State =>
+            new RoomStateData
+            {
+                Pause = _pause,
+                VideoUrl = _currentVideoUrl,
+                UserCount = _users.Count,
+                UserLogins = _users.Values.Select(u => u.Login),
+            };
 
         public IEnumerable<Guid> UserSessions => _users.Keys;
         public User User(Guid sessionId) => _users.ContainsKey(sessionId) ? _users[sessionId] : new User(sessionId);
@@ -25,6 +35,13 @@ namespace SyncTheater.Core
         {
             _users.Add(user.SessionId, user);
             Update(Notifications.UserConnected, user.Login);
+            Api.SendNotification(new ServerNotification
+                {
+                    Data = State,
+                    Type = Notifications.State,
+                },
+                user.SessionId
+            );
         }
 
         public void UserRegistered(User user)

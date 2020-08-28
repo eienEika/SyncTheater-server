@@ -24,6 +24,7 @@ namespace SyncTheater.Core.API
 
     public static class Notifications
     {
+        public const string State = "State";
         public const string VideoUrl = "VideoUrl";
         public const string VideoPause = "VideoPause";
         public const string UserConnected = "UserConnected";

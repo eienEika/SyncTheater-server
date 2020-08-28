@@ -41,6 +41,11 @@ namespace SyncTheater.Core.API
             Send(ApiCode.Notification, notification, Room.GetState.UserSessions);
         }
 
+        public static void SendNotification(ServerNotification notification, Guid sendTo)
+        {
+            Send(ApiCode.Notification, notification, sendTo);
+        }
+
         private static void Send(ApiCode code, object data, Guid sendTo)
         {
             Room.GetInstance.Send(Packet.Write(code, data.ToJson()), sendTo);
