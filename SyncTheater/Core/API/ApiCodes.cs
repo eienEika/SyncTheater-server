@@ -44,11 +44,14 @@ namespace SyncTheater.Core.API
     internal enum ApiError
     {
         NoError = 0,
+        UnknownError,
         UnknownMethod,
         UnknownApi,
         AuthenticationRequired,
         EmptyText = 100,
         LoginOccupied,
         InvalidAuthKey,
+        AlreadyAuthenticated,
+        AlreadyRegistered,
     }
 }

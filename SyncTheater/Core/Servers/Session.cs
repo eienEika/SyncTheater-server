@@ -20,7 +20,7 @@ namespace SyncTheater.Core.Servers
 
         protected override void OnDisconnected()
         {
-            Room.GetState.UserDisconnect(new User(Id));
+            Room.GetState.DisconnectUser(new User(Id));
         }
 
         protected override void OnError(SocketError error)

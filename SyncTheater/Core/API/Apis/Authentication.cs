@@ -41,7 +41,7 @@ namespace SyncTheater.Core.API.Apis
 
         private static Tuple<ApiError, object> AuthenticateAnonymous(User user)
         {
-            Room.GetState.UserConnected(user);
+            Room.GetState.AuthenticateUser(user);
 
             Api.SendNotification(Notifications.State, Room.GetState.State, user.SessionId);
 
@@ -50,7 +50,7 @@ namespace SyncTheater.Core.API.Apis
 
         private static Tuple<ApiError, object> Disconnect(User user)
         {
-            Room.GetState.UserDisconnect(user);
+            Room.GetState.DisconnectUser(user);
 
             return Nothing;
         }
@@ -71,7 +71,7 @@ namespace SyncTheater.Core.API.Apis
                 return LoginOccupiedError;
             }
 
-            Room.GetState.UserRegistered(user);
+            Room.GetState.RegisterUser(user);
 
             return new Tuple<ApiError, object>(ApiError.NoError,
                 new
@@ -91,7 +91,7 @@ namespace SyncTheater.Core.API.Apis
                 return InvalidAuthKeyError;
             }
 
-            Room.GetState.UserConnected(user);
+            Room.GetState.AuthenticateUser(user);
 
             Api.SendNotification(Notifications.State, Room.GetState.State, user.SessionId);
 
