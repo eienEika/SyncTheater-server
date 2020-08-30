@@ -13,7 +13,7 @@ namespace SyncTheater.Core
         private string _currentVideoUrl;
         private bool _pause;
 
-        private RoomStateData State =>
+        public RoomStateData State =>
             new RoomStateData
             {
                 Pause = _pause,
@@ -28,52 +28,35 @@ namespace SyncTheater.Core
         public void UserDisconnect(User user)
         {
             _users.Remove(user.SessionId);
-            Update(Notifications.UserDisconnected, user.Login);
+            Api.SendNotification(Notifications.UserDisconnected, user.Login);
         }
 
         public void UserConnected(User user)
         {
             _users.Add(user.SessionId, user);
-            Update(Notifications.UserConnected, user.Login);
-            Api.SendNotification(new ServerNotification
-                {
-                    Data = State,
-                    Type = Notifications.State,
-                },
-                user.SessionId
-            );
+            Api.SendNotification(Notifications.UserConnected, user.Login);
         }
 
         public void UserRegistered(User user)
         {
             _users[user.SessionId] = user;
-            Update(Notifications.UserDisconnected, null);
-            Update(Notifications.UserConnected, user.Login);
+            Api.SendNotification(Notifications.UserDisconnected, null);
+            Api.SendNotification(Notifications.UserConnected, user.Login);
         }
 
         public void SetVideoUrl(string url)
         {
             _currentVideoUrl = url;
-            Update(Notifications.VideoUrl, _currentVideoUrl);
+            Api.SendNotification(Notifications.VideoUrl, _currentVideoUrl);
 
             _pause = false;
-            Update(Notifications.VideoPause, _pause);
+            Api.SendNotification(Notifications.VideoPause, _pause);
         }
 
         public void PauseCycle()
         {
             _pause = !_pause;
-            Update(Notifications.VideoPause, _pause);
-        }
-
-        private static void Update(string type, object data)
-        {
-            Api.SendNotification(new ServerNotification
-                {
-                    Data = data,
-                    Type = type,
-                }
-            );
+            Api.SendNotification(Notifications.VideoPause, _pause);
         }
     }
 }

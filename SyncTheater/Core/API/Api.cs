@@ -36,13 +36,23 @@ namespace SyncTheater.Core.API
             Send(apiCode, response, sender);
         }
 
-        public static void SendNotification(ServerNotification notification)
+        public static void SendNotification(string type, object data)
         {
+            var notification = new ServerNotification
+            {
+                Data = data,
+                Type = type,
+            };
             Send(ApiCode.Notification, notification, Room.GetState.UserSessions);
         }
 
-        public static void SendNotification(ServerNotification notification, Guid sendTo)
+        public static void SendNotification(string type, object data, Guid sendTo)
         {
+            var notification = new ServerNotification
+            {
+                Data = data,
+                Type = type,
+            };
             Send(ApiCode.Notification, notification, sendTo);
         }
 

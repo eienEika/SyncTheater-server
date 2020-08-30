@@ -43,6 +43,8 @@ namespace SyncTheater.Core.API.Apis
         {
             Room.GetState.UserConnected(user);
 
+            Api.SendNotification(Notifications.State, Room.GetState.State, user.SessionId);
+
             return NoError;
         }
 
@@ -90,6 +92,8 @@ namespace SyncTheater.Core.API.Apis
             }
 
             Room.GetState.UserConnected(user);
+
+            Api.SendNotification(Notifications.State, Room.GetState.State, user.SessionId);
 
             return NoError;
         }

@@ -55,15 +55,7 @@ namespace SyncTheater.Core.API.Apis
                 return EmptyTextError;
             }
 
-            var notification = new ServerNotification
-            {
-                Data = new
-                {
-                    Text = text,
-                },
-                Type = Notifications.NewChatMessage,
-            };
-            Api.SendNotification(notification);
+            Api.SendNotification(Notifications.NewChatMessage, text);
 
             return new Tuple<ApiError, object>(ApiError.NoError, null);
         }
