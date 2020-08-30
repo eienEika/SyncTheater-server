@@ -29,6 +29,7 @@ namespace SyncTheater.Core.Models
         public string Login { get; }
         public string AuthKey { get; }
         public bool IsAnonymous { get; }
+        public bool IsAuthenticated { get; set; }
 
         public bool Equals(User other) =>
             !ReferenceEquals(null, other) && (ReferenceEquals(this, other) || SessionId.Equals(other.SessionId));

@@ -17,7 +17,7 @@ namespace SyncTheater.Core.API.Apis
 
             var request = SerializationUtils.Deserialize<IncomeData<Model>>(body);
 
-            if (user == null)
+            if (!user.IsAuthenticated)
             {
                 return new ApiRequestResponse
                 {

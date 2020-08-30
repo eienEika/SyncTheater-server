@@ -33,6 +33,7 @@ namespace SyncTheater.Core
 
         public void UserConnected(User user)
         {
+            user.IsAuthenticated = true;
             _users.Add(user.SessionId, user);
             Api.SendNotification(Notifications.UserConnected, user.Login);
         }
