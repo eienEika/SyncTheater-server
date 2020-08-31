@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Serilog;
 using SyncTheater.Core.API.Types;
 using SyncTheater.Core.Models;
@@ -10,27 +7,6 @@ namespace SyncTheater.Core.API
 {
     internal abstract class ApiComponentBase
     {
-        protected static readonly Tuple<ApiError, object, IEnumerable<NotificationTrigger>> NoError =
-            new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(
-                ApiError.NoError,
-                null,
-                Enumerable.Empty<NotificationTrigger>()
-            );
-
-        protected static readonly Tuple<ApiError, object, IEnumerable<NotificationTrigger>> LoginRequiredError =
-            new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(
-                ApiError.LoginRequired,
-                null,
-                Enumerable.Empty<NotificationTrigger>()
-            );
-
-        protected static readonly Tuple<ApiError, object, IEnumerable<NotificationTrigger>> UnknownMethodError =
-            new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(
-                ApiError.UnknownMethod,
-                null,
-                Enumerable.Empty<NotificationTrigger>()
-            );
-
         private static readonly ApiResult AuthenticationRequiredResult = new ApiResult(
             new ApiRequestResponse
             {
@@ -53,19 +29,18 @@ namespace SyncTheater.Core.API
 
             var request = SerializationUtils.Deserialize<IncomeData<object>>(body);
 
-            var (error, data, triggers) = MethodSwitch(request.Method, request.Data, user);
+            var result = MethodSwitch(request.Method, request.Data, user);
 
             var response = new ApiRequestResponse
             {
-                Data = data,
-                Error = error,
+                Data = result.Data,
+                Error = result.Error,
                 Method = request.Method,
             };
 
-            return new ApiResult(response, triggers);
+            return new ApiResult(response, result.Triggers);
         }
 
-        protected abstract Tuple<ApiError, object, IEnumerable<NotificationTrigger>> MethodSwitch(
-            string method, object data, User user);
+        protected abstract MethodResult MethodSwitch(string method, object data, User user);
     }
 }

@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using SyncTheater.Core.API.Types;
 using SyncTheater.Core.Models;
 
 namespace SyncTheater.Core.API.Apis
@@ -8,8 +8,7 @@ namespace SyncTheater.Core.API.Apis
     {
         protected override bool AuthenticateRequired { get; } = true;
 
-        protected override Tuple<ApiError, object, IEnumerable<NotificationTrigger>> MethodSwitch(
-            string method, object data, User user)
+        protected override MethodResult MethodSwitch(string method, object data, User user)
         {
             var castedData = data as Model;
 
@@ -17,32 +16,32 @@ namespace SyncTheater.Core.API.Apis
             {
                 Methods.Player.PauseCycle => PauseCycle(user),
                 Methods.Player.SetVideo => SetVideo(user, castedData?.Url),
-                _ => UnknownMethodError,
+                _ => MethodResult.UnknownMethod,
             };
         }
 
-        private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> SetVideo(User user, string url)
+        private static MethodResult SetVideo(User user, string url)
         {
             if (user.IsAnonymous)
             {
-                return LoginRequiredError;
+                return MethodResult.LoginRequired;
             }
 
             Room.GetState.SetVideoUrl(url);
 
-            return NoError;
+            return MethodResult.Ok;
         }
 
-        private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> PauseCycle(User user)
+        private static MethodResult PauseCycle(User user)
         {
             if (user.IsAnonymous)
             {
-                return LoginRequiredError;
+                return MethodResult.LoginRequired;
             }
 
             Room.GetState.PauseCycle();
 
-            return NoError;
+            return MethodResult.Ok;
         }
 
         [Serializable]

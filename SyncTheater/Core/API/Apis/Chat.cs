@@ -1,46 +1,39 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Serilog;
+using SyncTheater.Core.API.Types;
 using SyncTheater.Core.Models;
 
 namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Chat : ApiComponentBase
     {
-        private static readonly Tuple<ApiError, object, IEnumerable<NotificationTrigger>> EmptyTextError =
-            new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(
-                ApiError.EmptyText,
-                null,
-                Enumerable.Empty<NotificationTrigger>()
-            );
+        private static readonly MethodResult EmptyText = new MethodResult(ApiError.EmptyText);
 
         protected override bool AuthenticateRequired { get; } = true;
 
-        protected override Tuple<ApiError, object, IEnumerable<NotificationTrigger>> MethodSwitch(
-            string method, object data, User user)
+        protected override MethodResult MethodSwitch(string method, object data, User user)
         {
             var castedData = data as Model;
 
             return method switch
             {
                 Methods.Chat.NewMessage => NewMessage(user, castedData?.Text),
-                _ => UnknownMethodError,
+                _ => MethodResult.UnknownMethod,
             };
         }
 
-        private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> NewMessage(User user, string text)
+        private static MethodResult NewMessage(User user, string text)
         {
             Log.Debug($"Chat API: NewMessage request, text: \"{text}\"");
 
             if (user.IsAnonymous)
             {
-                return LoginRequiredError;
+                return MethodResult.LoginRequired;
             }
 
             if (string.IsNullOrWhiteSpace(text))
             {
-                return EmptyTextError;
+                return EmptyText;
             }
 
             var triggers = new[]
@@ -48,7 +41,7 @@ namespace SyncTheater.Core.API.Apis
                 new NotificationTrigger(Notifications.NewChatMessage, text),
             };
 
-            return new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(ApiError.NoError, null, triggers);
+            return new MethodResult(ApiError.NoError, triggers);
         }
 
         [Serializable]

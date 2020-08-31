@@ -1,6 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using SyncTheater.Core.API.Types;
 using SyncTheater.Core.Models;
 using SyncTheater.Utils.DB;
 using SyncTheater.Utils.DB.DTOs;
@@ -9,24 +8,12 @@ namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Authentication : ApiComponentBase
     {
-        private static readonly Tuple<ApiError, object, IEnumerable<NotificationTrigger>> LoginOccupiedError =
-            new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(
-                ApiError.LoginOccupied,
-                null,
-                Enumerable.Empty<NotificationTrigger>()
-            );
-
-        private static readonly Tuple<ApiError, object, IEnumerable<NotificationTrigger>> InvalidAuthKeyError =
-            new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(
-                ApiError.InvalidAuthKey,
-                null,
-                Enumerable.Empty<NotificationTrigger>()
-            );
+        private static readonly MethodResult LoginOccupied = new MethodResult(ApiError.LoginOccupied);
+        private static readonly MethodResult InvalidAuthKey = new MethodResult(ApiError.InvalidAuthKey);
 
         protected override bool AuthenticateRequired { get; } = false;
 
-        protected override Tuple<ApiError, object, IEnumerable<NotificationTrigger>> MethodSwitch(
-            string method, object data, User user)
+        protected override MethodResult MethodSwitch(string method, object data, User user)
         {
             var castedData = data as Model;
 
@@ -36,11 +23,11 @@ namespace SyncTheater.Core.API.Apis
                 Methods.Authentication.Disconnect => Disconnect(user),
                 Methods.Authentication.Register => Register(user.SessionId, castedData?.Login),
                 Methods.Authentication.AuthLogin => AuthenticateLogined(user, castedData?.AuthKey),
-                _ => UnknownMethodError,
+                _ => MethodResult.UnknownMethod,
             };
         }
 
-        private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> AuthenticateAnonymous(User user)
+        private static MethodResult AuthenticateAnonymous(User user)
         {
             Room.GetState.AuthenticateUser(user);
 
@@ -49,17 +36,17 @@ namespace SyncTheater.Core.API.Apis
                 new NotificationTrigger(Notifications.State, Room.GetState.State, user.SessionId),
             };
 
-            return new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(ApiError.NoError, null, triggers);
+            return new MethodResult(ApiError.NoError, triggers);
         }
 
-        private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> Disconnect(User user)
+        private static MethodResult Disconnect(User user)
         {
             Room.GetState.DisconnectUser(user);
 
-            return NoError;
+            return MethodResult.Ok;
         }
 
-        private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> Register(Guid sessionId, string login)
+        private static MethodResult Register(Guid sessionId, string login)
         {
             var user = new User(sessionId, login);
 
@@ -73,7 +60,7 @@ namespace SyncTheater.Core.API.Apis
 
             if (!added)
             {
-                return LoginOccupiedError;
+                return LoginOccupied;
             }
 
             Room.GetState.RegisterUser(user);
@@ -84,21 +71,16 @@ namespace SyncTheater.Core.API.Apis
                 user.AuthKey,
             };
 
-            return new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(
-                ApiError.NoError,
-                response,
-                Enumerable.Empty<NotificationTrigger>()
-            );
+            return new MethodResult(ApiError.NoError, response);
         }
 
-        private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> AuthenticateLogined(
-            User fakeUser, string authKey)
+        private static MethodResult AuthenticateLogined(User fakeUser, string authKey)
         {
             var user = Db.GetUserByAuthKey(authKey)?.Entity(fakeUser.SessionId);
 
             if (user == null)
             {
-                return InvalidAuthKeyError;
+                return InvalidAuthKey;
             }
 
             Room.GetState.AuthenticateUser(user);
@@ -110,7 +92,7 @@ namespace SyncTheater.Core.API.Apis
                 new NotificationTrigger(Notifications.State, Room.GetState.State, user.SessionId),
             };
 
-            return new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(ApiError.NoError, null, triggers);
+            return new MethodResult(ApiError.NoError, triggers);
         }
 
         [Serializable]
