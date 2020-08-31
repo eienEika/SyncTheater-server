@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Serilog;
 using SyncTheater.Core.API.Types;
 using SyncTheater.Core.Models;
+using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API
 {
@@ -29,16 +31,41 @@ namespace SyncTheater.Core.API
                 Enumerable.Empty<NotificationTrigger>()
             );
 
-        protected static ApiResult AuthenticationRequiredResult(string method) =>
-            new ApiResult(
-                new ApiRequestResponse
-                {
-                    Data = null,
-                    Error = ApiError.AuthenticationRequired,
-                    Method = method,
-                }
-            );
+        private static readonly ApiResult AuthenticationRequiredResult = new ApiResult(
+            new ApiRequestResponse
+            {
+                Data = null,
+                Error = ApiError.AuthenticationRequired,
+                Method = null,
+            }
+        );
 
-        public abstract ApiResult Request(string body, User user);
+        protected abstract bool AuthenticateRequired { get; }
+
+        public ApiResult Request(string body, User user)
+        {
+            Log.Verbose($"Got request with body {body}.");
+
+            if (AuthenticateRequired && !user.IsAuthenticated)
+            {
+                return AuthenticationRequiredResult;
+            }
+
+            var request = SerializationUtils.Deserialize<IncomeData<object>>(body);
+
+            var (error, data, triggers) = MethodSwitch(request.Method, request.Data, user);
+
+            var response = new ApiRequestResponse
+            {
+                Data = data,
+                Error = error,
+                Method = request.Method,
+            };
+
+            return new ApiResult(response, triggers);
+        }
+
+        protected abstract Tuple<ApiError, object, IEnumerable<NotificationTrigger>> MethodSwitch(
+            string method, object data, User user);
     }
 }

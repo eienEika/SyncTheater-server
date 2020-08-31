@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Serilog;
-using SyncTheater.Core.API.Types;
 using SyncTheater.Core.Models;
-using SyncTheater.Utils;
 
 namespace SyncTheater.Core.API.Apis
 {
@@ -17,31 +15,18 @@ namespace SyncTheater.Core.API.Apis
                 Enumerable.Empty<NotificationTrigger>()
             );
 
-        public override ApiResult Request(string body, User user)
+        protected override bool AuthenticateRequired { get; } = true;
+
+        protected override Tuple<ApiError, object, IEnumerable<NotificationTrigger>> MethodSwitch(
+            string method, object data, User user)
         {
-            Log.Verbose($"Got request to chat with body {body}.");
+            var castedData = data as Model;
 
-            var request = SerializationUtils.Deserialize<IncomeData<Model>>(body);
-
-            if (!user.IsAuthenticated)
+            return method switch
             {
-                return AuthenticationRequiredResult(request.Method);
-            }
-
-            var (error, data, triggers) = request.Method switch
-            {
-                Methods.Chat.NewMessage => NewMessage(user, request.Data.Text),
+                Methods.Chat.NewMessage => NewMessage(user, castedData?.Text),
                 _ => UnknownMethodError,
             };
-
-            var response = new ApiRequestResponse
-            {
-                Data = data,
-                Error = error,
-                Method = request.Method,
-            };
-
-            return new ApiResult(response, triggers);
         }
 
         private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> NewMessage(User user, string text)

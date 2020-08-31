@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Serilog;
-using SyncTheater.Core.API.Types;
 using SyncTheater.Core.Models;
-using SyncTheater.Utils;
 using SyncTheater.Utils.DB;
 using SyncTheater.Utils.DB.DTOs;
 
@@ -26,29 +23,21 @@ namespace SyncTheater.Core.API.Apis
                 Enumerable.Empty<NotificationTrigger>()
             );
 
-        public override ApiResult Request(string body, User user)
+        protected override bool AuthenticateRequired { get; } = false;
+
+        protected override Tuple<ApiError, object, IEnumerable<NotificationTrigger>> MethodSwitch(
+            string method, object data, User user)
         {
-            Log.Verbose($"Got request to authentication with body {body}.");
+            var castedData = data as Model;
 
-            var request = SerializationUtils.Deserialize<IncomeData<Model>>(body);
-
-            var (error, data, triggers) = request.Method switch
+            return method switch
             {
                 Methods.Authentication.AuthAnon => AuthenticateAnonymous(user),
                 Methods.Authentication.Disconnect => Disconnect(user),
-                Methods.Authentication.Register => Register(user.SessionId, request.Data.Login),
-                Methods.Authentication.AuthLogin => AuthenticateLogined(user, request.Data.AuthKey),
+                Methods.Authentication.Register => Register(user.SessionId, castedData?.Login),
+                Methods.Authentication.AuthLogin => AuthenticateLogined(user, castedData?.AuthKey),
                 _ => UnknownMethodError,
             };
-
-            var response = new ApiRequestResponse
-            {
-                Data = data,
-                Error = error,
-                Method = request.Method,
-            };
-
-            return new ApiResult(response, triggers);
         }
 
         private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> AuthenticateAnonymous(User user)
