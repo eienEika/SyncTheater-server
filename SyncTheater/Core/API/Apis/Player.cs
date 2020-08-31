@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Serilog;
 using SyncTheater.Core.API.Types;
 using SyncTheater.Core.Models;
@@ -8,7 +9,7 @@ namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Player : ApiComponentBase
     {
-        public override object Request(string body, User user)
+        public override ApiResult Request(string body, User user)
         {
             Log.Verbose($"Got request to player with body {body}.");
 
@@ -16,34 +17,31 @@ namespace SyncTheater.Core.API.Apis
 
             if (!user.IsAuthenticated)
             {
-                return new ApiRequestResponse
-                {
-                    Data = null,
-                    Error = ApiError.AuthenticationRequired,
-                    Method = request.Method,
-                };
+                return AuthenticationRequiredResult(request.Method);
             }
 
-            var (error, data) = request.Method switch
+            var (error, data, triggers) = request.Method switch
             {
                 Methods.Player.PauseCycle => PauseCycle(user),
                 Methods.Player.SetVideo => SetVideo(user, request.Data.Url),
-                _ => new Tuple<ApiError, object>(ApiError.UnknownMethod, null),
+                _ => UnknownMethodError,
             };
 
-            return new ApiRequestResponse
+            var response = new ApiRequestResponse
             {
                 Data = data,
                 Error = error,
                 Method = request.Method,
             };
+
+            return new ApiResult(response, triggers);
         }
 
-        private static Tuple<ApiError, object> SetVideo(User user, string url)
+        private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> SetVideo(User user, string url)
         {
             if (user.IsAnonymous)
             {
-                return AuthenticationRequiredError;
+                return LoginRequiredError;
             }
 
             Room.GetState.SetVideoUrl(url);
@@ -51,11 +49,11 @@ namespace SyncTheater.Core.API.Apis
             return NoError;
         }
 
-        private static Tuple<ApiError, object> PauseCycle(User user)
+        private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> PauseCycle(User user)
         {
             if (user.IsAnonymous)
             {
-                return AuthenticationRequiredError;
+                return LoginRequiredError;
             }
 
             Room.GetState.PauseCycle();

@@ -48,6 +48,7 @@ namespace SyncTheater.Core.API
         UnknownMethod,
         UnknownApi,
         AuthenticationRequired,
+        LoginRequired,
         EmptyText = 100,
         LoginOccupied,
         InvalidAuthKey,

@@ -8,12 +8,14 @@ namespace SyncTheater.Core.API
 {
     internal static class Api
     {
-        private static readonly object UnknownApiResponse = new ApiRequestResponse
-        {
-            Data = null,
-            Error = ApiError.UnknownApi,
-            Method = null,
-        };
+        private static readonly ApiResult UnknownApiResponse = new ApiResult(
+            new ApiRequestResponse
+            {
+                Data = null,
+                Error = ApiError.UnknownApi,
+                Method = null,
+            }
+        );
 
         private static readonly ApiComponentBase Authentication = new Authentication();
         private static readonly ApiComponentBase Chat = new Chat();
@@ -25,7 +27,7 @@ namespace SyncTheater.Core.API
 
             var user = Room.GetState.User(sender);
 
-            var response = apiCode switch
+            var result = apiCode switch
             {
                 ApiCode.Authentication => Authentication.Request(jsonData, user),
                 ApiCode.Chat => Chat.Request(jsonData, user),
@@ -33,7 +35,17 @@ namespace SyncTheater.Core.API
                 _ => UnknownApiResponse,
             };
 
-            Send(apiCode, response, sender);
+            Send(apiCode, result.Response, sender);
+
+            if (result.Response.Error != ApiError.NoError)
+            {
+                return;
+            }
+
+            foreach (var trigger in result.Triggers)
+            {
+                trigger.Execute();
+            }
         }
 
         public static void SendNotification(string type, object data)

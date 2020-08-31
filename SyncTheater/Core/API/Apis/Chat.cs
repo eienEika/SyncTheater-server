@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Serilog;
 using SyncTheater.Core.API.Types;
 using SyncTheater.Core.Models;
@@ -8,10 +10,14 @@ namespace SyncTheater.Core.API.Apis
 {
     internal sealed class Chat : ApiComponentBase
     {
-        private static readonly Tuple<ApiError, object> EmptyTextError =
-            new Tuple<ApiError, object>(ApiError.EmptyText, null);
+        private static readonly Tuple<ApiError, object, IEnumerable<NotificationTrigger>> EmptyTextError =
+            new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(
+                ApiError.EmptyText,
+                null,
+                Enumerable.Empty<NotificationTrigger>()
+            );
 
-        public override object Request(string body, User user)
+        public override ApiResult Request(string body, User user)
         {
             Log.Verbose($"Got request to chat with body {body}.");
 
@@ -19,35 +25,32 @@ namespace SyncTheater.Core.API.Apis
 
             if (!user.IsAuthenticated)
             {
-                return new ApiRequestResponse
-                {
-                    Data = null,
-                    Error = ApiError.AuthenticationRequired,
-                    Method = request.Method,
-                };
+                return AuthenticationRequiredResult(request.Method);
             }
 
-            var (error, data) = request.Method switch
+            var (error, data, triggers) = request.Method switch
             {
                 Methods.Chat.NewMessage => NewMessage(user, request.Data.Text),
-                _ => new Tuple<ApiError, object>(ApiError.UnknownMethod, null),
+                _ => UnknownMethodError,
             };
 
-            return new ApiRequestResponse
+            var response = new ApiRequestResponse
             {
                 Data = data,
                 Error = error,
                 Method = request.Method,
             };
+
+            return new ApiResult(response, triggers);
         }
 
-        private static Tuple<ApiError, object> NewMessage(User user, string text)
+        private static Tuple<ApiError, object, IEnumerable<NotificationTrigger>> NewMessage(User user, string text)
         {
             Log.Debug($"Chat API: NewMessage request, text: \"{text}\"");
 
             if (user.IsAnonymous)
             {
-                return AuthenticationRequiredError;
+                return LoginRequiredError;
             }
 
             if (string.IsNullOrWhiteSpace(text))
@@ -55,9 +58,12 @@ namespace SyncTheater.Core.API.Apis
                 return EmptyTextError;
             }
 
-            Api.SendNotification(Notifications.NewChatMessage, text);
+            var triggers = new[]
+            {
+                new NotificationTrigger(Notifications.NewChatMessage, text),
+            };
 
-            return new Tuple<ApiError, object>(ApiError.NoError, null);
+            return new Tuple<ApiError, object, IEnumerable<NotificationTrigger>>(ApiError.NoError, null, triggers);
         }
 
         [Serializable]
