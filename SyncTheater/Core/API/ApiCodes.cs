@@ -54,5 +54,6 @@ namespace SyncTheater.Core.API
         InvalidAuthKey,
         AlreadyAuthenticated,
         AlreadyRegistered,
+        BadLogin,
     }
 }

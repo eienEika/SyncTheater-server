@@ -34,6 +34,8 @@ namespace SyncTheater.Core.Models
         public bool Equals(User other) =>
             !ReferenceEquals(null, other) && (ReferenceEquals(this, other) || SessionId.Equals(other.SessionId));
 
+        public static bool CheckLoginIsValid(string login) => !string.IsNullOrWhiteSpace(login);
+
         public override bool Equals(object obj) => ReferenceEquals(this, obj) || obj is User other && Equals(other);
 
         public override int GetHashCode() => SessionId.GetHashCode();

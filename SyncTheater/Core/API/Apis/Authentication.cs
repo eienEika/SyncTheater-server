@@ -10,6 +10,7 @@ namespace SyncTheater.Core.API.Apis
     {
         private static readonly MethodResult LoginOccupied = new MethodResult(ApiError.LoginOccupied);
         private static readonly MethodResult InvalidAuthKey = new MethodResult(ApiError.InvalidAuthKey);
+        private static readonly MethodResult BadLogin = new MethodResult(ApiError.BadLogin);
 
         protected override bool AuthenticateRequired { get; } = false;
 
@@ -53,6 +54,11 @@ namespace SyncTheater.Core.API.Apis
 
         private static MethodResult Register(Guid sessionId, string login)
         {
+            if (User.CheckLoginIsValid(login))
+            {
+                return BadLogin;
+            }
+            
             if (Db.GetUser(login) != null)
             {
                 return LoginOccupied;
