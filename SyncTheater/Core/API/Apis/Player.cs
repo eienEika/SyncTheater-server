@@ -27,7 +27,12 @@ namespace SyncTheater.Core.API.Apis
                 return MethodResult.LoginRequired;
             }
 
-            Room.GetState.SetVideoUrl(url);
+            var res = Room.GetState.SetVideoUrl(url);
+
+            if (res != ApiError.NoError)
+            {
+                return new MethodResult(res);
+            }
 
             return MethodResult.Ok;
         }
@@ -39,7 +44,12 @@ namespace SyncTheater.Core.API.Apis
                 return MethodResult.LoginRequired;
             }
 
-            Room.GetState.PauseCycle();
+            var res = Room.GetState.PauseCycle();
+
+            if (res != ApiError.NoError)
+            {
+                return new MethodResult(res);
+            }
 
             return MethodResult.Ok;
         }

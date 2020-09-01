@@ -29,7 +29,12 @@ namespace SyncTheater.Core.API.Apis
 
         private static MethodResult AuthenticateAnonymous(User user)
         {
-            Room.GetState.AuthenticateUser(user);
+            var res = Room.GetState.AuthenticateUser(user);
+
+            if (res != ApiError.NoError)
+            {
+                return new MethodResult(res);
+            }
 
             var triggers = new[]
             {
@@ -55,7 +60,12 @@ namespace SyncTheater.Core.API.Apis
 
             var user = new User(sessionId, login);
 
-            Room.GetState.RegisterUser(user);
+            var res = Room.GetState.RegisterUser(user);
+
+            if (res != ApiError.NoError)
+            {
+                return new MethodResult(res);
+            }
 
             Db.AddUser(
                 new UserDto
@@ -83,7 +93,12 @@ namespace SyncTheater.Core.API.Apis
                 return InvalidAuthKey;
             }
 
-            Room.GetState.AuthenticateUser(user);
+            var res = Room.GetState.AuthenticateUser(user);
+
+            if (res != ApiError.NoError)
+            {
+                return new MethodResult(res);
+            }
 
             Api.SendNotification(Notifications.State, Room.GetState.State, user.SessionId);
 
