@@ -48,22 +48,22 @@ namespace SyncTheater.Core.API.Apis
 
         private static MethodResult Register(Guid sessionId, string login)
         {
+            if (Db.GetUser(login) != null)
+            {
+                return LoginOccupied;
+            }
+
             var user = new User(sessionId, login);
 
-            var added = Db.AddUser(
+            Room.GetState.RegisterUser(user);
+
+            Db.AddUser(
                 new UserDto
                 {
                     Login = user.Login,
                     AuthKey = user.AuthKey,
                 }
             );
-
-            if (!added)
-            {
-                return LoginOccupied;
-            }
-
-            Room.GetState.RegisterUser(user);
 
             var response = new
             {
